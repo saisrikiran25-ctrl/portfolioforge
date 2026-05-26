@@ -278,6 +278,83 @@ html,body{background:#07070F;color:#F2EEE8;font-family:'Manrope',sans-serif;-web
   border-color: #C9A84C;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE OVERRIDES
+   All rules use !important to override inline style={{}} props.
+   Desktop layout (inline styles) is completely untouched.
+   Breakpoint: max-width 768px
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* ── NavBar (all pages) ── */
+  .app-nav { padding: 14px 18px !important; }
+
+  /* ── Landing: top nav ── */
+  .land-nav-wrap { padding: 14px 18px !important; }
+
+  /* ── Landing: stats row → 2×2 grid ── */
+  .land-stats-row {
+    gap: 24px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    padding-top: 28px !important;
+  }
+
+  /* ── Landing: bottom footer bar ── */
+  .land-footer-bar {
+    padding: 14px 18px !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    text-align: center !important;
+  }
+
+  /* ── Input page: step breadcrumb ── */
+  .step-ind { padding: 10px 16px !important; flex-wrap: wrap !important; }
+
+  /* ── Input page: 1fr 320px → single column ── */
+  .input-main-grid {
+    grid-template-columns: 1fr !important;
+    padding: 24px 16px !important;
+  }
+
+  /* ── Input page: tips sidebar → hidden on mobile ── */
+  .tips-sidebar { display: none !important; }
+
+  /* ── Input page: remove right padding from form panel when single-column ── */
+  .form-left-panel { padding-right: 0 !important; }
+
+  /* ── Method page: AI config card ── */
+  .method-ai-card { padding: 24px 18px !important; }
+
+  /* ── Results: success banner → stack vertically ── */
+  .success-bann {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 14px 16px !important;
+    gap: 12px !important;
+  }
+  .success-bann button { margin-left: 0 !important; width: 100% !important; }
+
+  /* ── Results: tab bar wraps, actions go to new row ── */
+  .results-tabrow { flex-wrap: wrap !important; }
+  .results-tab-actions {
+    padding: 6px 4px !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+
+  /* ── Code block: horizontal scroll on mobile ── */
+  .code-pre {
+    font-size: 11.5px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    white-space: pre !important;
+    word-break: normal !important;
+  }
+
+  /* ── General: prevent any overflow clipping ── */
+  body { overflow-x: hidden; }
+}
 `;
 
 
@@ -2833,7 +2910,7 @@ export default function PortfolioForge() {
       </div>
 
       {/* ── Top nav ── */}
-      <div style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="land-nav-wrap" style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center" }}>
           <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 13, letterSpacing: "0.14em", color: "#F2EEE8", textTransform: "uppercase" }}>
             Portfolio<span style={{ color: "#C9A84C" }}>Forge</span>
@@ -2876,7 +2953,7 @@ export default function PortfolioForge() {
         </div>
 
         {/* stats row */}
-        <div className="u5" style={{ display: "flex", gap: 56, flexWrap: "wrap", justifyContent: "center", borderTop: "1px solid rgba(255,255,255,.05)", paddingTop: 40 }}>
+        <div className="u5 land-stats-row" style={{ display: "flex", gap: 56, flexWrap: "wrap", justifyContent: "center", borderTop: "1px solid rgba(255,255,255,.05)", paddingTop: 40 }}>
           {[["3", "Files Output"], ["6+", "Deploy Platforms"], ["< 60s", "Generation Time"], ["0", "Config Required"]].map(([n, l]) => (
             <div key={l} style={{ textAlign: "center" }}>
               <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 30, fontWeight: 800, color: "#C9A84C", lineHeight: 1 }}>{n}</div>
@@ -2928,7 +3005,7 @@ export default function PortfolioForge() {
       </div>
 
       {/* bottom bar */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,.04)", padding: "20px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="land-footer-bar" style={{ borderTop: "1px solid rgba(255,255,255,.04)", padding: "20px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: 12, color: "#3A384A" }}>Built by Sai Kiran</span>
         <span style={{ fontSize: 12, color: "#3A384A" }}>© 2026 Portfolio<span style={{ color: "#C9A84C" }}>Forge</span></span>
       </div>
@@ -2952,17 +3029,17 @@ export default function PortfolioForge() {
       <NavBar onBack={() => setPage("landing")} />
 
       {/* Step indicator */}
-      <div style={{ borderBottom: "1px solid rgba(255,255,255,.04)", padding: "12px 48px", display: "flex", alignItems: "center", gap: 10 }}>
+      <div className="step-ind" style={{ borderBottom: "1px solid rgba(255,255,255,.04)", padding: "12px 48px", display: "flex", alignItems: "center", gap: 10 }}>
         {["Fill Out Details", "→", "AI Generates", "→", "Your Portfolio"].map((s, i) => (
           <span key={i} style={{ fontSize: 12, color: i === 0 ? "#C9A84C" : "#3A384A", fontWeight: i === 0 ? 600 : 400, letterSpacing: "0.04em" }}>{s}</span>
         ))}
       </div>
 
       {/* Main grid */}
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 320px", maxWidth: 1100, margin: "0 auto", width: "100%", padding: "48px 24px", gap: 0 }}>
+      <div className="input-main-grid" style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 320px", maxWidth: 1100, margin: "0 auto", width: "100%", padding: "48px 24px", gap: 0 }}>
 
         {/* Left: Wizard Form */}
-        <div style={{ paddingRight: 44 }}>
+        <div className="form-left-panel" style={{ paddingRight: 44 }}>
           <div className="u1" style={{ marginBottom: 28 }}>
             <p style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: 10 }}>Step 01 of 01</p>
             <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: 30, fontWeight: 700, letterSpacing: "-0.022em", color: "#F2EEE8", marginBottom: 8 }}>Build Your Profile</h2>
@@ -3523,7 +3600,7 @@ export default function PortfolioForge() {
         </div>
 
         {/* Right: tips */}
-        <div className="u4" style={{ borderLeft: "1px solid rgba(255,255,255,.05)", paddingLeft: 40 }}>
+        <div className="u4 tips-sidebar" style={{ borderLeft: "1px solid rgba(255,255,255,.05)", paddingLeft: 40 }}>
           <p style={{ fontSize: 11, color: "#55536A", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 22 }}>Tips for Best Results</p>
 
           {[
@@ -3590,7 +3667,7 @@ export default function PortfolioForge() {
 
         <div className="u3" style={{ width: "100%" }}>
           {method === "ai" ? (
-            <div style={{ maxWidth: 600, margin: "0 auto", background: "rgba(255,255,255,.02)", border: "1px solid rgba(255,255,255,.06)", borderRadius: 16, padding: "40px" }}>
+            <div className="method-ai-card" style={{ maxWidth: 600, margin: "0 auto", background: "rgba(255,255,255,.02)", border: "1px solid rgba(255,255,255,.06)", borderRadius: 16, padding: "40px" }}>
               
               <div style={{ marginBottom: 32 }}>
                 <label style={{ display: "block", fontSize: 13, color: "#F2EEE8", fontWeight: 600, marginBottom: 12 }}>AI Provider</label>
@@ -3738,7 +3815,7 @@ export default function PortfolioForge() {
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "44px 24px 100px" }}>
 
           {/* ── Success banner ── */}
-          <div className="u1" style={{ background: "rgba(47,200,122,.055)", border: "1px solid rgba(47,200,122,.2)", borderRadius: 14, padding: "18px 26px", display: "flex", alignItems: "center", gap: 18, marginBottom: 48 }}>
+          <div className="u1 success-bann" style={{ background: "rgba(47,200,122,.055)", border: "1px solid rgba(47,200,122,.2)", borderRadius: 14, padding: "18px 26px", display: "flex", alignItems: "center", gap: 18, marginBottom: 48 }}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(47,200,122,.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: "#2FC87A" }}>✓</div>
             <div>
               <div style={{ fontWeight: 700, color: "#2FC87A", fontSize: 14, marginBottom: 3 }}>Portfolio generated successfully</div>
@@ -3757,14 +3834,14 @@ export default function PortfolioForge() {
           </div>
 
           {/* ── Tab bar ── */}
-          <div className="u3" style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,.06)", alignItems: "center" }}>
+          <div className="u3 results-tabrow" style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,.06)", alignItems: "center" }}>
             {tabs.map(t => (
               <button key={t.key} className={`tab-btn ${activeTab === t.key ? "active" : "inactive"}`} onClick={() => setActiveTab(t.key)}>
                 {t.label}
               </button>
             ))}
             <div style={{ flex: 1 }} />
-            <div style={{ display: "flex", gap: 8, padding: "0 4px" }}>
+            <div className="results-tab-actions" style={{ display: "flex", gap: 8, padding: "0 4px" }}>
               <button className="btn-outline" onClick={() => copy(active.content, active.key)} style={{ padding: "6px 15px", fontSize: 12 }}>
                 {copied === active.key ? "✓ Copied" : "Copy"}
               </button>
