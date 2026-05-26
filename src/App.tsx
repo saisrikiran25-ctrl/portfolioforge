@@ -2622,7 +2622,7 @@ export default function PortfolioForge() {
 
       {/* bottom bar */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,.04)", padding: "20px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 12, color: "#3A384A" }}>Powered by Claude AI</span>
+        <span style={{ fontSize: 12, color: "#3A384A" }}>Built by Sai Kiran</span>
         <span style={{ fontSize: 12, color: "#3A384A" }}>© 2026 PortfolioForge</span>
       </div>
     </div>
@@ -3057,7 +3057,7 @@ Dean's List · Graduated with Distinction`}
               Generate Another Portfolio
             </button>
             <p style={{ fontSize: 11, color: "#3A384A", marginTop: 52, letterSpacing: "0.06em" }}>
-              PORTFOLIOFORGE · POWERED BY CLAUDE AI · © 2026
+              PORTFOLIOFORGE · BUILT BY SAI KIRAN · © 2026
             </p>
           </div>
         </div>
