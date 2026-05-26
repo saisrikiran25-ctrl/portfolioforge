@@ -27,13 +27,13 @@ jobs:
         with:
           script: |
             try {
-              const pages = await github.request("GET /repos/{owner}/{repo}/pages", {
+              const pages = await github.rest.repos.getPages({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
               });
 
               if (pages.data.build_type !== "workflow") {
-                await github.request("PATCH /repos/{owner}/{repo}/pages", {
+                await github.rest.repos.updateInformationAboutPagesSite({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   build_type: "workflow",
@@ -85,19 +85,20 @@ jobs:
         with:
           script: |
             // Active/in-flight workflow run statuses from GitHub Actions API.
-            const waitingStatuses = new Set(["queued", "in_progress", "requested", "waiting"]);
+            const waitingStatuses = new Set(["queued", "in_progress"]);
             // Poll for up to 90s (18 x 5s), matching observed completion time of legacy Pages runs.
             const maxChecks = 18;
             const intervalMs = 5000;
 
             for (let attempt = 1; attempt <= maxChecks; attempt++) {
-              const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              const runs = await github.rest.actions.listWorkflowRunsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 per_page: 100,
+                page: 1,
               });
 
-              const legacyRuns = runs.filter(
+              const legacyRuns = runs.data.workflow_runs.filter(
                 (run) =>
                   run.name === "pages build and deployment" &&
                   run.head_sha === context.sha &&
