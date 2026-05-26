@@ -83,7 +83,9 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            // Active/in-flight workflow run statuses from GitHub Actions API.
             const waitingStatuses = new Set(["queued", "in_progress", "requested", "waiting"]);
+            // Poll for up to 90s (18 x 5s), matching observed completion time of legacy Pages runs.
             const maxChecks = 18;
             const intervalMs = 5000;
 
