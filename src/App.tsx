@@ -2506,24 +2506,10 @@ export default function PortfolioForge() {
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 55% at 50% 0%, rgba(201,168,76,0.065) 0%, transparent 65%)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "60%", height: 1, background: "linear-gradient(90deg,transparent,rgba(201,168,76,0.15),transparent)" }} />
 
-      {/* ── Floating 3-D geometry ── */}
-      <div style={{ position: "absolute", top: "11%", right: "7%", transformStyle: "preserve-3d" }} className="f1">
-        <div style={{ width: 88, height: 88, border: "1px solid rgba(201,168,76,.22)", borderRadius: 10, background: "rgba(201,168,76,.018)", transform: "perspective(450px) rotateX(20deg) rotateY(32deg)" }} />
-      </div>
-
-      <div style={{ position: "absolute", top: "42%", left: "3.5%", transformStyle: "preserve-3d" }} className="f3">
-        <div style={{ width: 44, height: 44, border: "1px solid rgba(201,168,76,.12)", transform: "perspective(400px) rotateX(12deg) rotateY(18deg) rotateZ(28deg)", background: "rgba(201,168,76,.009)" }} />
-      </div>
-      <div style={{ position: "absolute", top: "22%", right: "19%", transformStyle: "preserve-3d" }} className="f2">
-        <div style={{ width: 32, height: 32, border: "1px solid rgba(201,168,76,.1)", transform: "perspective(400px) rotateX(32deg) rotateY(-22deg) rotateZ(-18deg)" }} />
-      </div>
       {/* crosshair deco */}
       <div style={{ position: "absolute", bottom: "28%", right: "4%" }} className="f1">
         <div style={{ width: 100, height: 1, background: "linear-gradient(90deg,transparent,rgba(201,168,76,.25),transparent)" }} />
         <div style={{ width: 1, height: 100, background: "linear-gradient(180deg,transparent,rgba(201,168,76,.25),transparent)", margin: "-50px 0 0 50px" }} />
-      </div>
-      <div style={{ position: "absolute", top: "60%", right: "12%", transformStyle: "preserve-3d" }} className="f3">
-        <div style={{ width: 20, height: 20, border: "1px solid rgba(201,168,76,.14)", borderRadius: 3, transform: "perspective(300px) rotateX(40deg) rotateY(40deg)" }} />
       </div>
 
       {/* ── Top nav ── */}
@@ -2543,7 +2529,7 @@ export default function PortfolioForge() {
         {/* pill */}
         <div className="u1" style={{ display: "inline-flex", alignItems: "center", gap: 9, background: "rgba(201,168,76,.08)", border: "1px solid rgba(201,168,76,.22)", borderRadius: 100, padding: "7px 18px", marginBottom: 36 }}>
           <div className="pulse-dot" />
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#C9A84C", letterSpacing: "0.12em", textTransform: "uppercase" }}>AI-Powered · Zero Setup · 3 Files</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#C9A84C", letterSpacing: "0.12em", textTransform: "uppercase" }}>AI-Powered · Zero Setup · Plug In & Play</span>
         </div>
 
         {/* headline */}
