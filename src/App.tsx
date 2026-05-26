@@ -403,7 +403,90 @@ The JSON must contain exactly these keys:
 /* ─────────────────────────────────────────────────────────────────────────────
    FALLBACK PORTFOLIO GENERATOR - Fortune 500 Grade
 ───────────────────────────────────────────────────────────────────────────── */
-function generateFallbackPortfolio(resumeText: string): GenerationResult {
+function generateFallbackPortfolio(resumeText: string, templateId: string = "executive"): GenerationResult {
+  let fontLinks = '';
+  let rootVariables = '';
+  if (templateId === 'creative') {
+    fontLinks = `<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">`;
+    rootVariables = `
+    --color-bg: #0D0714;
+    --color-surface: #170C22;
+    --color-surface-2: #241335;
+    --color-border: rgba(255, 0, 127, 0.12);
+    --color-accent: #FF007F;
+    --color-accent-light: #7C4DFF;
+    --color-accent-glow: rgba(255, 0, 127, 0.25);
+    --color-text: #F8F5FC;
+    --color-text-muted: #A39BB0;
+    --color-text-dim: #544D60;
+    --color-success: #00FFBB;
+    --color-error: #FF5A79;
+    --font-display: 'Outfit', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 28px;
+    --radius-sm: 12px;
+    --radius-full: 9999px;
+    --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);`;
+  } else if (templateId === 'tech') {
+    fontLinks = `<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">`;
+    rootVariables = `
+    --color-bg: #000000;
+    --color-surface: #0A0A0A;
+    --color-surface-2: #141414;
+    --color-border: rgba(0, 255, 102, 0.2);
+    --color-accent: #00FF66;
+    --color-accent-light: #00E5FF;
+    --color-accent-glow: rgba(0, 255, 102, 0.15);
+    --color-text: #D1FFDE;
+    --color-text-muted: #728F79;
+    --color-text-dim: #324D39;
+    --color-success: #00FF66;
+    --color-error: #FF3366;
+    --font-display: 'JetBrains Mono', monospace;
+    --font-body: 'JetBrains Mono', monospace;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 0px;
+    --radius-sm: 0px;
+    --radius-full: 0px;
+    --transition: all 0.15s steps(4, end);`;
+  } else {
+    fontLinks = `<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">`;
+    rootVariables = `
+    --color-bg: #0F172A;
+    --color-surface: #1E293B;
+    --color-surface-2: #334155;
+    --color-border: rgba(255, 255, 255, 0.06);
+    --color-accent: #C9A84C;
+    --color-accent-light: #E8C76B;
+    --color-accent-glow: rgba(201, 168, 76, 0.15);
+    --color-text: #F8FAFC;
+    --color-text-muted: #94A3B8;
+    --color-text-dim: #475569;
+    --color-success: #10B981;
+    --color-error: #EF4444;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 12px;
+    --radius-sm: 6px;
+    --radius-full: 9999px;
+    --transition: all 0.25s ease-in-out;`;
+  }
+
+  const labels = {
+    aboutLabel: templateId === 'tech' ? './about_me' : 'About Me',
+    aboutTitle: templateId === 'tech' ? 'system.out.print(info);' : 'Passionate About Creating Impact',
+    expLabel: templateId === 'tech' ? './experience' : 'Career Journey',
+    expTitle: templateId === 'tech' ? 'cat career_history.log' : 'Professional Experience',
+    skillsLabel: templateId === 'tech' ? './skills' : 'Expertise',
+    skillsTitle: templateId === 'tech' ? 'npm run list-tech' : 'Skills & Technologies',
+    projectsLabel: templateId === 'tech' ? './projects' : 'Portfolio',
+    projectsTitle: templateId === 'tech' ? 'ls -la ./featured_works' : 'Featured Projects',
+    contactLabel: templateId === 'tech' ? './contact' : 'Get In Touch',
+    contactTitle: templateId === 'tech' ? 'ssh contact@forge.io' : 'Let\'s Work Together'
+  };
+
   // Parse resume data
   const lines = resumeText.split('\n').filter(l => l.trim());
   
@@ -577,7 +660,7 @@ function generateFallbackPortfolio(resumeText: string): GenerationResult {
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    ${fontLinks}
     
     <link rel="stylesheet" href="styles.css">
     
@@ -659,8 +742,8 @@ function generateFallbackPortfolio(resumeText: string): GenerationResult {
     <section id="about" class="section">
         <div class="container">
             <div class="section-header animate">
-                <span class="section-label">About Me</span>
-                <h2 class="section-title">Passionate About Creating Impact</h2>
+                <span class="section-label">${labels.aboutLabel}</span>
+                <h2 class="section-title">${labels.aboutTitle}</h2>
             </div>
             <div class="about-grid">
                 <div class="about-content animate">
@@ -695,8 +778,8 @@ function generateFallbackPortfolio(resumeText: string): GenerationResult {
     <section id="experience" class="section section-alt">
         <div class="container">
             <div class="section-header animate">
-                <span class="section-label">Career Journey</span>
-                <h2 class="section-title">Professional Experience</h2>
+                <span class="section-label">${labels.expLabel}</span>
+                <h2 class="section-title">${labels.expTitle}</h2>
             </div>
             <div class="timeline">
                 ${experiences.map((exp, i) => `
@@ -724,8 +807,8 @@ function generateFallbackPortfolio(resumeText: string): GenerationResult {
     <section id="skills" class="section">
         <div class="container">
             <div class="section-header animate">
-                <span class="section-label">Expertise</span>
-                <h2 class="section-title">Skills & Technologies</h2>
+                <span class="section-label">${labels.skillsLabel}</span>
+                <h2 class="section-title">${labels.skillsTitle}</h2>
             </div>
             <div class="skills-grid">
                 ${skills.map((skill, i) => `
@@ -746,8 +829,8 @@ function generateFallbackPortfolio(resumeText: string): GenerationResult {
     <section id="projects" class="section section-alt">
         <div class="container">
             <div class="section-header animate">
-                <span class="section-label">Portfolio</span>
-                <h2 class="section-title">Featured Projects</h2>
+                <span class="section-label">${labels.projectsLabel}</span>
+                <h2 class="section-title">${labels.projectsTitle}</h2>
             </div>
             <div class="projects-grid">
                 ${projects.map((proj, i) => `
@@ -801,8 +884,8 @@ function generateFallbackPortfolio(resumeText: string): GenerationResult {
     <section id="contact" class="section section-alt">
         <div class="container">
             <div class="section-header animate">
-                <span class="section-label">Get In Touch</span>
-                <h2 class="section-title">Let's Work Together</h2>
+                <span class="section-label">${labels.contactLabel}</span>
+                <h2 class="section-title">${labels.contactTitle}</h2>
                 <p class="section-subtitle">Have a project in mind? Let's create something amazing.</p>
             </div>
             <div class="contact-wrapper">
@@ -886,25 +969,7 @@ function generateFallbackPortfolio(resumeText: string): GenerationResult {
 
 /* ─── CSS Custom Properties ─── */
 :root {
-    --color-bg: #0A0A0F;
-    --color-surface: #111119;
-    --color-surface-2: #1A1A24;
-    --color-border: rgba(255, 255, 255, 0.08);
-    --color-accent: #7C4DFF;
-    --color-accent-light: #B388FF;
-    --color-accent-glow: rgba(124, 77, 255, 0.25);
-    --color-text: #F0EDE6;
-    --color-text-muted: #8B8998;
-    --color-text-dim: #4A4858;
-    --color-success: #00D4AA;
-    --color-error: #FF6B6B;
-    --font-display: 'Space Grotesk', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-    --radius: 16px;
-    --radius-sm: 8px;
-    --radius-full: 9999px;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    ${rootVariables}
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.5);
@@ -1210,7 +1275,7 @@ p {
     inset: 0;
     background: 
         radial-gradient(ellipse 80% 50% at 50% -20%, var(--color-accent-glow), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 60%, rgba(124, 77, 255, 0.1), transparent);
+        radial-gradient(ellipse 60% 40% at 80% 60%, var(--color-accent-glow), transparent);
 }
 
 .hero-grid {
@@ -1227,7 +1292,8 @@ p {
     position: absolute;
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    background: rgba(124, 77, 255, 0.03);
+    background: var(--color-accent-glow);
+    opacity: 0.1;
 }
 
 .shape-1 {
@@ -2396,7 +2462,7 @@ export default function PortfolioForge() {
       setLoadingIdx(0);
       setTimeout(() => {
         try {
-          const fallbackResult = generateFallbackPortfolio(resumeText.trim());
+          const fallbackResult = generateFallbackPortfolio(resumeText.trim(), selectedTemplate);
           setResults(fallbackResult);
           setActiveTab("html");
           setPage("results");
