@@ -38,9 +38,10 @@ jobs:
                   repo: context.repo.repo,
                   build_type: "workflow",
                 });
+                core.info("Updated Pages source to GitHub Actions (build_type=workflow).");
+              } else {
+                core.info("Pages source already uses GitHub Actions (build_type=workflow).");
               }
-
-              core.info("Pages source is set to GitHub Actions (build_type=workflow).");
             } catch (error) {
               const status = error.status ?? error.response?.status;
               if (status === 404) {
