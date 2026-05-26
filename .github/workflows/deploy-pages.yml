@@ -23,37 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Force Pages to use GitHub Actions builds
-        uses: actions/github-script@v7
-        with:
-          script: |
-            try {
-              const pages = await github.rest.repos.getPages({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-              });
-
-              if (pages.data.build_type !== "workflow") {
-                await github.rest.repos.updateInformationAboutPagesSite({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  build_type: "workflow",
-                });
-                core.info("Updated Pages source to GitHub Actions (build_type=workflow).");
-              } else {
-                core.info("Pages source already uses GitHub Actions (build_type=workflow).");
-              }
-            } catch (error) {
-              const status = error.status ?? error.response?.status;
-              if (status === 404) {
-                core.warning("GitHub Pages is not enabled for this repository yet.");
-              } else if (status === 403) {
-                core.warning("Insufficient permission to update Pages settings. Confirm pages:write permission.");
-              } else {
-                core.warning(`Could not update Pages build_type to workflow: ${error.message}`);
-              }
-            }
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -81,43 +50,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for any branch-based Pages deployment on this commit
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Active/in-flight workflow run statuses from GitHub Actions API.
-            const waitingStatuses = new Set(["queued", "in_progress"]);
-            // Poll for up to 90s total (18 attempts × 5s interval), matching observed legacy run duration.
-            const maxChecks = 18;
-            const intervalMs = 5000;
-
-            for (let attempt = 1; attempt <= maxChecks; attempt++) {
-              const runs = await github.rest.actions.listWorkflowRunsForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                head_sha: context.sha,
-                per_page: 100,
-                page: 1,
-              });
-
-              const legacyRuns = runs.data.workflow_runs.filter(
-                (run) =>
-                  run.name === "pages build and deployment" &&
-                  run.head_sha === context.sha &&
-                  waitingStatuses.has(run.status),
-              );
-
-              if (legacyRuns.length === 0) {
-                core.info("No in-progress branch-based Pages deployment found for this commit.");
-                break;
-              }
-
-              core.info(
-                `Waiting for legacy Pages deployment to finish (${attempt}/${maxChecks})...`,
-              );
-              await new Promise((resolve) => setTimeout(resolve, intervalMs));
-            }
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
