@@ -2808,9 +2808,10 @@ export default function PortfolioForge() {
       {showBack
         ? <button onClick={onBack} style={{ background: "none", border: "none", color: "#55536A", cursor: "pointer", fontFamily: "'Manrope',sans-serif", fontSize: 13, display: "flex", alignItems: "center", gap: 7, transition: "color .2s" }} onMouseOver={e => (e.target as HTMLElement).style.color = "#C9A84C"} onMouseOut={e => (e.target as HTMLElement).style.color = "#55536A"}>← Back</button>
         : <div />}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 9, height: 9, borderRadius: 3, background: "linear-gradient(135deg,#C9A84C,#E8C76B)" }} />
-        <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 13, letterSpacing: "0.14em", color: "#F2EEE8", textTransform: "uppercase" }}>PortfolioForge</span>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 13, letterSpacing: "0.14em", color: "#F2EEE8", textTransform: "uppercase" }}>
+          Portfolio<span style={{ color: "#C9A84C" }}>Forge</span>
+        </span>
       </div>
       <div />
     </nav>
@@ -2833,9 +2834,10 @@ export default function PortfolioForge() {
 
       {/* ── Top nav ── */}
       <div style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 9, height: 9, borderRadius: 3, background: "linear-gradient(135deg,#C9A84C,#E8C76B)" }} />
-          <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 13, letterSpacing: "0.14em", color: "#F2EEE8", textTransform: "uppercase" }}>PortfolioForge</span>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 13, letterSpacing: "0.14em", color: "#F2EEE8", textTransform: "uppercase" }}>
+            Portfolio<span style={{ color: "#C9A84C" }}>Forge</span>
+          </span>
         </div>
         <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
           {[0.12, 0.12, 1].map((o, i) => <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: `rgba(201,168,76,${o})` }} />)}
@@ -2928,7 +2930,7 @@ export default function PortfolioForge() {
       {/* bottom bar */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,.04)", padding: "20px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: 12, color: "#3A384A" }}>Built by Sai Kiran</span>
-        <span style={{ fontSize: 12, color: "#3A384A" }}>© 2026 PortfolioForge</span>
+        <span style={{ fontSize: 12, color: "#3A384A" }}>© 2026 Portfolio<span style={{ color: "#C9A84C" }}>Forge</span></span>
       </div>
     </div>
   );
@@ -4069,7 +4071,7 @@ export default function PortfolioForge() {
               Generate Another Portfolio
             </button>
             <p style={{ fontSize: 11, color: "#3A384A", marginTop: 52, letterSpacing: "0.06em" }}>
-              PORTFOLIOFORGE · BUILT BY SAI KIRAN · © 2026
+              PORTFOLIO<span style={{ color: "#C9A84C" }}>FORGE</span> · BUILT BY SAI KIRAN · © 2026
             </p>
           </div>
         </div>
