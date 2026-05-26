@@ -2351,6 +2351,8 @@ export default function PortfolioForge() {
   const [aiModel, setAiModel] = useState("gpt-4o");
   const [apiKey, setApiKey] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("executive");
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [sandboxTab, setSandboxTab] = useState<"preview" | "upload">("preview");
   
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -2486,6 +2488,27 @@ export default function PortfolioForge() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(a.href);
+  };
+
+  const getPreviewSrcDoc = (html: string, css: string, js: string) => {
+    let srcDoc = html || "";
+    // Remove references to external styles.css to prevent 404 console errors in iframe
+    srcDoc = srcDoc.replace(/<link\s+[^>]*href=["'](?:\.\/)?styles\.css["'][^>]*>/gi, "");
+    // Inject CSS before </head>
+    if (srcDoc.includes("</head>")) {
+      srcDoc = srcDoc.replace("</head>", `<style>${css}</style></head>`);
+    } else {
+      srcDoc = `<style>${css}</style>` + srcDoc;
+    }
+    // Remove references to external main.js
+    srcDoc = srcDoc.replace(/<script\s+[^>]*src=["'](?:\.\/)?main\.js["'][^>]*><\/script>/gi, "");
+    // Inject JS before </body>
+    if (srcDoc.includes("</body>")) {
+      srcDoc = srcDoc.replace("</body>", `<script>${js}</script></body>`);
+    } else {
+      srcDoc = srcDoc + `<script>${js}</script>`;
+    }
+    return srcDoc;
   };
 
   const NavBar = ({ onBack, showBack = true }: { onBack: () => void; showBack?: boolean }) => (
@@ -2983,34 +3006,207 @@ Dean's List · Graduated with Distinction`}
           {/* ════════════════════════════════════
               INSTANT WEB PREVIEW SECTION
           ════════════════════════════════════ */}
-          <div style={{ marginTop: 60, padding: "28px 32px", background: "rgba(201,168,76,.03)", border: "1px solid rgba(201,168,76,.15)", borderRadius: 16, textAlign: "left" }}>
-            <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20 }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C", boxShadow: "0 0 10px #C9A84C" }} />
+          <div style={{ marginTop: 60, textAlign: "left" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
               <div>
                 <p style={{ fontSize: 10, color: "#C9A84C", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, marginBottom: 2 }}>Instant Sandbox Preview</p>
-                <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: 20, fontWeight: 700, color: "#F2EEE8" }}>Preview Your Site in 10 Seconds</h3>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: 24, fontWeight: 700, color: "#F2EEE8" }}>Preview & Verify Your Site</h3>
+              </div>
+              
+              {/* Tab Selector */}
+              <div style={{ display: "flex", background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 8, padding: 4 }}>
+                <button
+                  onClick={() => setSandboxTab("preview")}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 6,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all .2s",
+                    border: "none",
+                    background: sandboxTab === "preview" ? "rgba(201,168,76,.15)" : "transparent",
+                    color: sandboxTab === "preview" ? "#C9A84C" : "#6D6B7B"
+                  }}
+                >
+                  Live Sandbox Preview
+                </button>
+                <button
+                  onClick={() => setSandboxTab("upload")}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 6,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all .2s",
+                    border: "none",
+                    background: sandboxTab === "upload" ? "rgba(201,168,76,.15)" : "transparent",
+                    color: sandboxTab === "upload" ? "#C9A84C" : "#6D6B7B"
+                  }}
+                >
+                  Alternative Upload Sandboxes
+                </button>
               </div>
             </div>
-            <p style={{ fontSize: 13.5, color: "#9E9CAE", lineHeight: 1.65, marginBottom: 24 }}>
-              Want to see how your portfolio website looks before setting up permanent hosting? Download your files above and upload them to one of these free sandbox tools:
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
-              {[
-                { name: "Netlify Drop", url: "https://app.netlify.com/drop", action: "Drag & Drop Folder", desc: "Open Netlify Drop, drag your portfolio folder onto the screen, and see your live site instantly without signing up." },
-                { name: "Tiiny.host", url: "https://tiiny.host", action: "Upload Zip File", desc: "Compress your three files into a .zip archive, drag it onto Tiiny.host, and get an instant shareable preview URL." }
-              ].map(site => (
-                <a key={site.name} href={site.url} target="_blank" rel="noopener noreferrer" className="site-card" style={{ padding: "20px", display: "flex", flexDirection: "column", height: "100%", textAlign: "left" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, color: "#F2EEE8" }}>{site.name}</span>
-                    <span className="badge green" style={{ padding: "3px 8px", fontSize: 10 }}>{site.action}</span>
+
+            {sandboxTab === "preview" ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Control Bar for Viewport */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: 10, padding: "10px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#FF5F56" }} />
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#FFBD2E" }} />
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#27C93F" }} />
+                    </div>
+                    <span style={{ fontSize: 12, color: "#55536A", fontFamily: "'JetBrains Mono', monospace" }}>
+                      sandbox_preview.html
+                    </span>
                   </div>
-                  <p style={{ fontSize: 12.5, color: "#6D6B7B", lineHeight: 1.6, marginBottom: 16, flexGrow: 1 }}>{site.desc}</p>
-                  <div style={{ fontSize: 12, color: "#C9A84C", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                    Go to {site.name} <span>↗</span>
+
+                  {/* Device Toggles */}
+                  <div style={{ display: "flex", background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 6, padding: 3 }}>
+                    <button
+                      onClick={() => setPreviewMode("desktop")}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 4,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "all .2s",
+                        border: "none",
+                        background: previewMode === "desktop" ? "rgba(201,168,76,.15)" : "transparent",
+                        color: previewMode === "desktop" ? "#C9A84C" : "#6D6B7B",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                      </svg>
+                      Desktop
+                    </button>
+                    <button
+                      onClick={() => setPreviewMode("mobile")}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 4,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "all .2s",
+                        border: "none",
+                        background: previewMode === "mobile" ? "rgba(201,168,76,.15)" : "transparent",
+                        color: previewMode === "mobile" ? "#C9A84C" : "#6D6B7B",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                        <line x1="12" y1="18" x2="12.01" y2="18"/>
+                      </svg>
+                      Mobile
+                    </button>
                   </div>
-                </a>
-              ))}
-            </div>
+                </div>
+
+                {/* Live Sandbox Iframe Viewport */}
+                <div style={{ 
+                  display: "flex", 
+                  justifyContent: "center", 
+                  alignItems: "center", 
+                  background: "#030307", 
+                  border: "1px solid rgba(255, 255, 255, 0.05)", 
+                  borderRadius: 16, 
+                  padding: previewMode === "mobile" ? "32px 16px" : "0", 
+                  minHeight: "500px",
+                  overflow: "hidden"
+                }}>
+                  {previewMode === "desktop" ? (
+                    <iframe
+                      srcDoc={getPreviewSrcDoc(results.html, results.css, results.js)}
+                      title="Portfolio Desktop Preview"
+                      style={{
+                        width: "100%",
+                        height: "600px",
+                        border: "none",
+                        background: "#fff",
+                        borderRadius: 8
+                      }}
+                      sandbox="allow-scripts allow-same-origin"
+                    />
+                  ) : (
+                    /* Phone Frame Mockup */
+                    <div style={{
+                      width: "360px",
+                      height: "640px",
+                      border: "12px solid #1E1C26",
+                      borderRadius: "36px",
+                      boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
+                      background: "#fff",
+                      overflow: "hidden",
+                      position: "relative"
+                    }}>
+                      {/* Phone Speaker/Camera Notch */}
+                      <div style={{
+                        position: "absolute",
+                        top: 0,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: "120px",
+                        height: "18px",
+                        background: "#1E1C26",
+                        borderBottomLeftRadius: "12px",
+                        borderBottomRightRadius: "12px",
+                        zIndex: 10
+                      }} />
+                      <iframe
+                        srcDoc={getPreviewSrcDoc(results.html, results.css, results.js)}
+                        title="Portfolio Mobile Preview"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          border: "none",
+                          background: "#fff"
+                        }}
+                        sandbox="allow-scripts allow-same-origin"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Alternative Upload Sandbox */
+              <div style={{ padding: "28px 32px", background: "rgba(201,168,76,.03)", border: "1px solid rgba(201,168,76,.15)", borderRadius: 16 }}>
+                <p style={{ fontSize: 13.5, color: "#9E9CAE", lineHeight: 1.65, marginBottom: 24 }}>
+                  Want to see how your portfolio website looks before setting up permanent hosting? Download your files above and upload them to one of these free sandbox tools:
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+                  {[
+                    { name: "Netlify Drop", url: "https://app.netlify.com/drop", action: "Drag & Drop Folder", desc: "Open Netlify Drop, drag your portfolio folder onto the screen, and see your live site instantly without signing up." },
+                    { name: "Tiiny.host", url: "https://tiiny.host", action: "Upload Zip File", desc: "Compress your three files into a .zip archive, drag it onto Tiiny.host, and get an instant shareable preview URL." }
+                  ].map(site => (
+                    <a key={site.name} href={site.url} target="_blank" rel="noopener noreferrer" className="site-card" style={{ padding: "20px", display: "flex", flexDirection: "column", height: "100%", textAlign: "left" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, color: "#F2EEE8" }}>{site.name}</span>
+                        <span className="badge green" style={{ padding: "3px 8px", fontSize: 10 }}>{site.action}</span>
+                      </div>
+                      <p style={{ fontSize: 12.5, color: "#6D6B7B", lineHeight: 1.6, marginBottom: 16, flexGrow: 1 }}>{site.desc}</p>
+                      <div style={{ fontSize: 12, color: "#C9A84C", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                        Go to {site.name} <span>↗</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ════════════════════════════════════
