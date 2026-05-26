@@ -78,15 +78,39 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
     runs-on: ubuntu-latest
-    env:
-      PAGES_MIGRATION_WAIT_SECONDS: 45
     steps:
-      - name: Wait for legacy Pages deployment race window
-        # TODO: Remove this once branch-based "pages build and deployment" no longer triggers for this repository.
-        # During migration from branch-based Pages, GitHub may still trigger an auto Jekyll deployment.
-        # 45s is based on observed branch-based deployment completion time (~20-35s) with safety margin.
-        # Waiting helps ensure this workflow's deploy finishes last and remains the active site.
-        run: sleep "$PAGES_MIGRATION_WAIT_SECONDS"
+      - name: Wait for any branch-based Pages deployment on this commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const waitingStatuses = new Set(["queued", "in_progress", "requested", "waiting"]);
+            const maxChecks = 18;
+            const intervalMs = 5000;
+
+            for (let attempt = 1; attempt <= maxChecks; attempt++) {
+              const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              });
+
+              const legacyRuns = runs.filter(
+                (run) =>
+                  run.name === "pages build and deployment" &&
+                  run.head_sha === context.sha &&
+                  waitingStatuses.has(run.status),
+              );
+
+              if (legacyRuns.length === 0) {
+                core.info("No in-progress branch-based Pages deployment found for this commit.");
+                break;
+              }
+
+              core.info(
+                `Waiting for legacy Pages deployment to finish (${attempt}/${maxChecks})...`,
+              );
+              await new Promise((resolve) => setTimeout(resolve, intervalMs));
+            }
 
       - name: Deploy to GitHub Pages
         id: deployment
