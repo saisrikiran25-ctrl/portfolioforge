@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import executiveImg from "./assets/executive.png";
+import creativeImg from "./assets/creative.png";
+import techImg from "./assets/tech.png";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    TYPES
@@ -2822,9 +2825,9 @@ Dean's List · Graduated with Distinction`}
               <p style={{ textAlign: "center", color: "#6D6B7B", marginBottom: 32, fontSize: 14 }}>Select a premium template. More templates arriving soon.</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, marginBottom: 48 }}>
                 {[
-                  { id: "executive", name: "Executive Standard", desc: "Fortune 500 grade, minimalist, highly professional." },
-                  { id: "creative", name: "Creative Excellence", desc: "Vibrant, motion-heavy, designed for awards." },
-                  { id: "tech", name: "Tech Innovator", desc: "Dark mode, cyber aesthetics, developer focused." }
+                  { id: "executive", name: "Executive Standard", desc: "Fortune 500 grade, minimalist, highly professional.", img: executiveImg },
+                  { id: "creative", name: "Creative Excellence", desc: "Vibrant, motion-heavy, designed for awards.", img: creativeImg },
+                  { id: "tech", name: "Tech Innovator", desc: "Dark mode, cyber aesthetics, developer focused.", img: techImg }
                 ].map(tmpl => (
                   <div 
                     key={tmpl.id}
@@ -2835,8 +2838,8 @@ Dean's List · Graduated with Distinction`}
                       borderRadius: 16, padding: "24px", cursor: "pointer", transition: "all .2s"
                     }}
                   >
-                    <div style={{ height: 140, background: "rgba(0,0,0,.3)", borderRadius: 8, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 24, color: "rgba(255,255,255,.2)" }}>Preview</div>
+                    <div style={{ height: 140, background: "rgba(0,0,0,.3)", borderRadius: 8, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      <img src={tmpl.img} alt={tmpl.name} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: selectedTemplate === tmpl.id ? 0.95 : 0.65, transition: "opacity .2s" }} />
                     </div>
                     <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: 18, color: selectedTemplate === tmpl.id ? "#C9A84C" : "#F2EEE8", marginBottom: 8 }}>{tmpl.name}</h3>
                     <p style={{ fontSize: 13, color: "#6D6B7B" }}>{tmpl.desc}</p>
