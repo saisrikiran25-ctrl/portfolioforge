@@ -511,8 +511,8 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
     }
   }
 
-  // Strip "Name:" prefix if present
-  name = name.replace(/^name[:\s]+/i, '').trim();
+  // Strip "Name:" or other header prefixes if present
+  name = name.replace(/^(name|resume|portfolio)[:\s\-—–·|]*/i, '').trim();
 
   const firstName = name.split(' ')[0] || 'Professional';
   const lastName = name.split(' ').slice(1).join(' ') || '';
@@ -542,8 +542,8 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
     if (match) { title = match[1].trim(); break; }
   }
   
-  // Strip "Title:" or "Role:" prefix if present
-  title = title.replace(/^(title|role)[:\s]+/i, '').trim();
+  // Strip common label prefixes and headers (e.g. "Title:", "Role:", "Experience", etc.) from the title
+  title = title.replace(/^(title|role|experience|education|summary|about|skills|projects|work|history|employment|professional)[:\s\-—–·|]*/i, '').trim();
   
   // Extract location (used in meta tags if needed)
   const locationMatch = resumeText.match(/(?:^|\s)([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*,\s*[A-Z]{2})/m) ||
