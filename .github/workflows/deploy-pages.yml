@@ -42,9 +42,14 @@ jobs:
 
               core.info("Pages source is set to GitHub Actions (build_type=workflow).");
             } catch (error) {
-              core.warning(
-                `Could not update Pages build_type to workflow. Ensure GitHub Pages is enabled and this workflow has pages:write permission: ${error.message}`,
-              );
+              const status = error.status ?? error.response?.status;
+              if (status === 404) {
+                core.warning("GitHub Pages is not enabled for this repository yet.");
+              } else if (status === 403) {
+                core.warning("Insufficient permission to update Pages settings. Confirm pages:write permission.");
+              } else {
+                core.warning(`Could not update Pages build_type to workflow: ${error.message}`);
+              }
             }
 
       - name: Setup Node.js
@@ -79,6 +84,7 @@ jobs:
       - name: Wait for legacy Pages deployment race window
         # TODO: Remove this once branch-based "pages build and deployment" no longer triggers for this repository.
         # During migration from branch-based Pages, GitHub may still trigger an auto Jekyll deployment.
+        # 45s is based on observed branch-based deployment completion time (~20-35s) with safety margin.
         # Waiting helps ensure this workflow's deploy finishes last and remains the active site.
         run: sleep "$PAGES_MIGRATION_WAIT_SECONDS"
 
