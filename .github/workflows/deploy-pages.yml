@@ -27,15 +27,23 @@ jobs:
         with:
           script: |
             try {
-              await github.request("PATCH /repos/{owner}/{repo}/pages", {
+              const pages = await github.request("GET /repos/{owner}/{repo}/pages", {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                build_type: "workflow",
               });
+
+              if (pages.data.build_type !== "workflow") {
+                await github.request("PATCH /repos/{owner}/{repo}/pages", {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  build_type: "workflow",
+                });
+              }
+
               core.info("Pages source is set to GitHub Actions (build_type=workflow).");
             } catch (error) {
               core.warning(
-                `Could not update Pages build_type to workflow (check repo Pages permissions/settings): ${error.message}`,
+                `Could not update Pages build_type to workflow. Ensure GitHub Pages is enabled and this workflow has pages:write permission: ${error.message}`,
               );
             }
 
@@ -65,11 +73,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
     runs-on: ubuntu-latest
+    env:
+      PAGES_MIGRATION_WAIT_SECONDS: 45
     steps:
       - name: Wait for legacy Pages deployment race window
+        # TODO: Remove this once branch-based "pages build and deployment" no longer triggers for this repository.
         # During migration from branch-based Pages, GitHub may still trigger an auto Jekyll deployment.
-        # Waiting here helps ensure this workflow's deploy finishes last and remains the active site.
-        run: sleep 45
+        # Waiting helps ensure this workflow's deploy finishes last and remains the active site.
+        run: sleep "$PAGES_MIGRATION_WAIT_SECONDS"
 
       - name: Deploy to GitHub Pages
         id: deployment
