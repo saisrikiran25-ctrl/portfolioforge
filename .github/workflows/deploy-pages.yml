@@ -86,7 +86,7 @@ jobs:
           script: |
             // Active/in-flight workflow run statuses from GitHub Actions API.
             const waitingStatuses = new Set(["queued", "in_progress"]);
-            // Poll for up to 90s (18 x 5s), matching observed completion time of legacy Pages runs.
+            // Poll for up to 90s total (18 attempts × 5s interval), matching observed legacy run duration.
             const maxChecks = 18;
             const intervalMs = 5000;
 
@@ -94,6 +94,7 @@ jobs:
               const runs = await github.rest.actions.listWorkflowRunsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
+                head_sha: context.sha,
                 per_page: 100,
                 page: 1,
               });
