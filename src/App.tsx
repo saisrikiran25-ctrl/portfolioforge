@@ -2981,6 +2981,39 @@ Dean's List · Graduated with Distinction`}
           </div>
 
           {/* ════════════════════════════════════
+              INSTANT WEB PREVIEW SECTION
+          ════════════════════════════════════ */}
+          <div style={{ marginTop: 60, padding: "28px 32px", background: "rgba(201,168,76,.03)", border: "1px solid rgba(201,168,76,.15)", borderRadius: 16, textAlign: "left" }}>
+            <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20 }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C", boxShadow: "0 0 10px #C9A84C" }} />
+              <div>
+                <p style={{ fontSize: 10, color: "#C9A84C", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, marginBottom: 2 }}>Instant Sandbox Preview</p>
+                <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: 20, fontWeight: 700, color: "#F2EEE8" }}>Preview Your Site in 10 Seconds</h3>
+              </div>
+            </div>
+            <p style={{ fontSize: 13.5, color: "#9E9CAE", lineHeight: 1.65, marginBottom: 24 }}>
+              Want to see how your portfolio website looks before setting up permanent hosting? Download your files above and upload them to one of these free sandbox tools:
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+              {[
+                { name: "Netlify Drop", url: "https://app.netlify.com/drop", action: "Drag & Drop Folder", desc: "Open Netlify Drop, drag your portfolio folder onto the screen, and see your live site instantly without signing up." },
+                { name: "Tiiny.host", url: "https://tiiny.host", action: "Upload Zip File", desc: "Compress your three files into a .zip archive, drag it onto Tiiny.host, and get an instant shareable preview URL." }
+              ].map(site => (
+                <a key={site.name} href={site.url} target="_blank" rel="noopener noreferrer" className="site-card" style={{ padding: "20px", display: "flex", flexDirection: "column", height: "100%", textAlign: "left" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, color: "#F2EEE8" }}>{site.name}</span>
+                    <span className="badge green" style={{ padding: "3px 8px", fontSize: 10 }}>{site.action}</span>
+                  </div>
+                  <p style={{ fontSize: 12.5, color: "#6D6B7B", lineHeight: 1.6, marginBottom: 16, flexGrow: 1 }}>{site.desc}</p>
+                  <div style={{ fontSize: 12, color: "#C9A84C", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                    Go to {site.name} <span>↗</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* ════════════════════════════════════
               DEPLOYMENT GUIDE
           ════════════════════════════════════ */}
           <div style={{ marginTop: 80 }}>
