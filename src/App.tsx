@@ -30,6 +30,43 @@ interface GenerationResult {
   previewSites: PreviewSite[];
 }
 
+interface PersonalDetails {
+  name: string;
+  title: string;
+  email: string;
+  location: string;
+  linkedin: string;
+  github: string;
+  bio: string;
+  tagline: string;
+}
+
+interface Experience {
+  company: string;
+  role: string;
+  period: string;
+  bullets: string[];
+}
+
+interface Project {
+  name: string;
+  description: string;
+  technologies: string;
+}
+
+interface Education {
+  school: string;
+  degree: string;
+  gradYear: string;
+}
+
+interface Certification {
+  name: string;
+  issuer: string;
+  date: string;
+}
+
+
 /* ─────────────────────────────────────────────────────────────────────────────
    GLOBAL STYLES — injected once into <head>
 ───────────────────────────────────────────────────────────────────────────── */
@@ -146,8 +183,103 @@ html,body{background:#07070F;color:#F2EEE8;font-family:'Manrope',sans-serif;-web
 .badge{display:inline-block;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.22);border-radius:5px;padding:2px 9px;font-size:10px;font-weight:700;color:#C9A84C;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0}
 .badge.green{background:rgba(47,200,122,.1);border-color:rgba(47,200,122,.25);color:#2FC87A}
 
+/* ── Wizard UI Styles ── */
+.form-input-field {
+  width: 100%;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  color: #F2EEE8;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  padding: 12px 16px;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+  margin-top: 6px;
+}
+.form-input-field:focus {
+  border-color: rgba(201,168,76,0.5);
+  background: rgba(201,168,76,0.02);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+}
+.form-label-text {
+  font-size: 11px;
+  color: #A39BB0;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+.form-group-wrap {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.wizard-card {
+  background: rgba(255,255,255,0.015);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.wizard-card:hover {
+  border-color: rgba(255,255,255,0.1);
+}
+.remove-card-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(224,90,79,0.1);
+  border: 1px solid rgba(224,90,79,0.2);
+  color: #E05A4F;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.remove-card-btn:hover {
+  background: #E05A4F;
+  color: #07070F;
+}
+.add-card-btn {
+  background: rgba(201,168,76,0.08);
+  border: 1px dashed rgba(201,168,76,0.3);
+  color: #C9A84C;
+  border-radius: 8px;
+  width: 100%;
+  padding: 14px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-transform: uppercase;
+}
+.add-card-btn:hover {
+  background: rgba(201,168,76,0.15);
+  border-color: #C9A84C;
+}
 
 `;
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    MASTER PROMPT — elite portfolio generation
@@ -403,7 +535,15 @@ The JSON must contain exactly these keys:
 /* ─────────────────────────────────────────────────────────────────────────────
    FALLBACK PORTFOLIO GENERATOR - Fortune 500 Grade
 ───────────────────────────────────────────────────────────────────────────── */
-function generateFallbackPortfolio(resumeText: string, templateId: string = "executive"): GenerationResult {
+function generateFallbackPortfolio(
+  personal: PersonalDetails,
+  experiences: Experience[],
+  educationInput: Education[],
+  projectsInput: Project[],
+  skillsInput: string,
+  certificationsInput: Certification[],
+  templateId: string = "executive"
+): GenerationResult {
   let fontLinks = '';
   let rootVariables = '';
   if (templateId === 'creative') {
@@ -487,308 +627,52 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
     contactTitle: templateId === 'tech' ? 'ssh contact@forge.io' : 'Let\'s Work Together'
   };
 
-  // Parse resume data
-  const lines = resumeText.split('\n').filter(l => l.trim());
-  
-  // Extract name (loop through first 5 lines to find a valid capitalized name candidate)
-  let name = "Professional Portfolio";
-  const forbiddenNames = /^(resume|curriculum|vitae|cv|contact|info|summary|about|portfolio|experience|skills|education|certifications|projects)$/i;
-  
-  for (let i = 0; i < Math.min(lines.length, 5); i++) {
-    const candidate = lines[i].trim();
-    if (!candidate) continue;
-    
-    // Check if candidate line consists of 1-4 words, starts with capital letters, and does not contain forbidden keywords
-    const cleanCandidate = candidate.split(/[—\-·,]/)[0].trim();
-    const words = cleanCandidate.split(/\s+/);
-    if (words.length >= 1 && words.length <= 4) {
-      const isCapitalized = words.every(w => /^[A-Z]/.test(w));
-      const isForbidden = forbiddenNames.test(cleanCandidate);
-      if (isCapitalized && !isForbidden) {
-        name = cleanCandidate;
-        break;
-      }
-    }
-  }
-
-  // Strip "Name:" or other header prefixes if present
-  name = name.replace(/^(name|resume|portfolio)[:\s\-—–·|]*/i, '').trim();
+  const name = personal.name || "Professional Portfolio";
+  const title = personal.title || "Full Stack Developer";
+  const email = personal.email || "contact@example.com";
+  const linkedin = personal.linkedin || "#";
+  const github = personal.github || "#";
+  const location = personal.location || "United States";
+  const bio = personal.bio || "";
+  const tagline = personal.tagline || `Passionate ${title} with years of experience.`;
 
   const firstName = name.split(' ')[0] || 'Professional';
   const lastName = name.split(' ').slice(1).join(' ') || '';
   const initials = (firstName[0] || 'P') + (lastName[0] || 'F');
-  
-  // Extract email
-  const emailMatch = resumeText.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-  const email = emailMatch ? emailMatch[1] : 'contact@example.com';
-  
-  // Extract LinkedIn
-  const linkedinMatch = resumeText.match(/linkedin\.com\/in\/([a-zA-Z0-9-]+)/i);
-  const linkedin = linkedinMatch ? `https://linkedin.com/in/${linkedinMatch[1]}` : '#';
-  
-  // Extract GitHub
-  const githubMatch = resumeText.match(/github\.com\/([a-zA-Z0-9-]+)/i);
-  const github = githubMatch ? `https://github.com/${githubMatch[1]}` : '#';
-  
-  // Extract title/role
-  const titlePatterns = [
-    /(?:^|\n)([A-Z][a-zA-Z\s&]+(?:Developer|Engineer|Designer|Manager|Director|Lead|Architect|Analyst|Consultant|Specialist))/m,
-    /(?:Title|Role|Position)[:\s]+([^\n]+)/i,
-    /(?:—|–|-)\s*([A-Z][a-zA-Z\s&]+(?:Developer|Engineer|Designer|Manager|Lead))/
-  ];
-  let title = "Full Stack Developer";
-  for (const pattern of titlePatterns) {
-    const match = resumeText.match(pattern);
-    if (match) { title = match[1].trim(); break; }
-  }
-  
-  // Strip common label prefixes and headers (e.g. "Title:", "Role:", "Experience", etc.) from the title
-  title = title.replace(/^(title|role|experience|education|summary|about|skills|projects|work|history|employment|professional)[:\s\-—–·|]*/i, '').trim();
-  
-  // Extract location (used in meta tags if needed)
-  const locationMatch = resumeText.match(/(?:^|\s)([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*,\s*[A-Z]{2})/m) ||
-                        resumeText.match(/([A-Z][a-zA-Z]+,\s*[A-Z][a-zA-Z]+)/);
-  const _location = locationMatch ? locationMatch[1] : 'United States';
-  void _location;
-  
-  // Calculate years of experience
-  const yearMatches = resumeText.match(/\b(19|20)\d{2}\b/g);
-  const years = yearMatches ? Math.max(1, new Date().getFullYear() - Math.min(...yearMatches.map(Number))) : 5;
 
-  // Extract about/summary
-  const aboutMatch = resumeText.match(/(?:ABOUT|SUMMARY|PROFILE|OBJECTIVE)[:\s]*\n?([\s\S]*?)(?=\n[A-Z]{2,}|\n\n[A-Z]|$)/i);
-  const about = aboutMatch ? aboutMatch[1].trim().substring(0, 500) : 
-    `Passionate ${title} with extensive experience in building scalable solutions and delivering exceptional results. Committed to continuous learning and innovation.`;
+  // Calculate years of experience from experiences array
+  const years = experiences.length > 0 ? Math.max(1, new Date().getFullYear() - Math.min(...experiences.map(e => {
+    const yearMatches = e.period.match(/\b(19|20)\d{2}\b/g);
+    return yearMatches ? Math.min(...yearMatches.map(Number)) : new Date().getFullYear();
+  }))) : 5;
 
-  // Extract experience section text
-  const expMatch = resumeText.match(/(?:EXPERIENCE|WORK HISTORY|EMPLOYMENT|WORK EXPERIENCE)[:\s]*\n?([\s\S]*?)(?=\n(?:SKILLS|EDUCATION|PROJECTS|CERTIFICATIONS|ACHIEVEMENTS|LICENSES|HONORS|PUBLICATIONS)|$)/i);
-  const expText = expMatch ? expMatch[1] : '';
-  const expLines = expText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  
-  const experiences: Array<{company: string, role: string, period: string, bullets: string[]}> = [];
-  const dateRangeRegex = /(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|\b\d{4}|\b\d{2}\/\d{4})\s*(?:-|–|—|to)\s*(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|\b\d{4}|\b\d{2}\/\d{4}|Present|Current|Active)/i;
-  
-  let currentEntry: typeof experiences[0] | null = null;
-  
-  for (let i = 0; i < expLines.length; i++) {
-    const line = expLines[i];
-    const hasDate = dateRangeRegex.test(line);
-    const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line);
-    
-    if (hasDate) {
-      if (currentEntry) {
-        experiences.push(currentEntry);
-      }
-      
-      const dateMatch = line.match(dateRangeRegex);
-      const period = dateMatch ? dateMatch[0] : '2021 - Present';
-      
-      let headerText = line.replace(dateRangeRegex, '').replace(/[()]/g, '').trim();
-      if (headerText.length < 4 && i > 0) {
-        const prevLine = expLines[i - 1];
-        if (!dateRangeRegex.test(prevLine) && !prevLine.startsWith('•') && !prevLine.startsWith('-') && !prevLine.startsWith('*')) {
-          headerText = prevLine + ' ' + headerText;
-        }
-      }
-      
-      headerText = headerText.replace(/^[—–\-·,|:\s]+/, '').replace(/[—–\-·,|:\s]+$/, '').trim();
-      
-      let company = 'Company';
-      let role = title;
-      
-      const parts = headerText.split(/\s*(?:—|–|-|\||·|,|at\s+)\s*/);
-      if (parts.length >= 2) {
-        const roleKeywords = /(?:Engineer|Developer|Designer|Manager|Lead|Architect|Analyst|Consultant|Director|Specialist|Writer|Expert|Scientist|VP|Head|Intern)/i;
-        if (roleKeywords.test(parts[1])) {
-          company = parts[0];
-          role = parts[1];
-        } else if (roleKeywords.test(parts[0])) {
-          role = parts[0];
-          company = parts[1];
-        } else {
-          company = parts[0];
-          role = parts[1];
-        }
-      } else if (parts.length === 1 && parts[0].length > 0) {
-        const atMatch = parts[0].match(/(.+?)\s+at\s+(.+)/i);
-        if (atMatch) {
-          role = atMatch[1].trim();
-          company = atMatch[2].trim();
-        } else {
-          if (/(?:Engineer|Developer|Designer|Manager|Lead|Architect|Analyst|Consultant)/i.test(parts[0])) {
-            role = parts[0];
-            company = 'Company';
-          } else {
-            company = parts[0];
-            role = title;
-          }
-        }
-      }
-      
-      currentEntry = {
-        company: company.trim() || 'Company',
-        role: role.trim() || title,
-        period: period.trim(),
-        bullets: []
-      };
-    } else {
-      if (currentEntry) {
-        if (isBullet || line.length > 10) {
-          const cleanedBullet = line.replace(/^[\s•\-*]+/, '').replace(/^\d+\.\s*/, '').trim();
-          if (cleanedBullet.length > 5) {
-            currentEntry.bullets.push(cleanedBullet);
-          }
-        }
-      } else {
-        const nextLineHasDate = (i + 1 < expLines.length) && dateRangeRegex.test(expLines[i + 1]);
-        if (nextLineHasDate && !isBullet) {
-          // Lookahead header handled by next iteration's prevLine check
-        }
-      }
-    }
-  }
-  
-  if (currentEntry) {
-    experiences.push(currentEntry);
-  }
+  const about = bio || `Passionate ${title} with extensive experience in building scalable solutions and delivering exceptional results. Committed to continuous learning and innovation.`;
 
-  // Fallback to simpler line parser if no date ranges were found
-  if (experiences.length === 0) {
-    let currentExp: typeof experiences[0] | null = null;
-    for (const line of expLines) {
-      const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line);
-      if (!isBullet && /^[A-Z]/.test(line)) {
-        if (currentExp) experiences.push(currentExp);
-        let rest = line.replace(/[()]/g, '').trim();
-        let company = 'Company';
-        let role = title;
-        let period = '2020 - Present';
-        
-        const parts = rest.split(/\s*(?:—|–|-|\||·|,|at\s+)\s*/);
-        if (parts.length >= 2) {
-          company = parts[0];
-          role = parts[1];
-        } else {
-          company = parts[0];
-        }
-        currentExp = { company, role, period, bullets: [] };
-      } else if (currentExp && (isBullet || line.length > 8)) {
-        currentExp.bullets.push(line.replace(/^[\s•\-*]+/, '').trim());
-      }
-    }
-    if (currentExp) experiences.push(currentExp);
-  }
-  
-  if (experiences.length === 0) {
-    experiences.push({
-      company: 'Leading Technology Company',
-      role: title,
-      period: '2020 - Present',
-      bullets: ['Led development of scalable solutions', 'Mentored team members', 'Improved system performance by 40%']
-    });
-  }
-  
-  // Extract skills
-  const skillsMatch = resumeText.match(/(?:SKILLS|TECHNOLOGIES|TECH STACK|TECHNICAL SKILLS)[:\s]*\n?([\s\S]*?)(?=\n(?:EXPERIENCE|EDUCATION|PROJECTS|CERTIFICATIONS|ABOUT)|$)/i);
-  const skillsText = skillsMatch ? skillsMatch[1] : resumeText;
-  
-  const skillKeywords = [
-    'JavaScript', 'TypeScript', 'React', 'Vue', 'Angular', 'Node.js', 'Python', 'Java', 'C++', 'C#',
-    'Go', 'Rust', 'Ruby', 'PHP', 'Swift', 'Kotlin', 'SQL', 'PostgreSQL', 'MongoDB', 'Redis',
-    'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'GraphQL', 'REST', 'Git', 'CI/CD', 'Agile',
-    'Figma', 'Sketch', 'Adobe XD', 'Photoshop', 'Illustrator', 'HTML', 'CSS', 'SASS', 'Tailwind',
-    'Next.js', 'Express', 'Django', 'Flask', 'Spring', 'TensorFlow', 'PyTorch', 'Machine Learning'
-  ];
-  
-  const foundSkills = skillKeywords.filter(skill => 
-    new RegExp(skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(skillsText)
-  ).slice(0, 12);
-  
-  const skills = foundSkills.length >= 4 ? foundSkills : 
+  // Map skills from comma-separated string to an array
+  const skillsArray = skillsInput.split(',').map(s => s.trim()).filter(Boolean);
+  const skills = skillsArray.length >= 4 ? skillsArray : 
     ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Python', 'SQL', 'Git', 'AWS'];
-  
-  // Extract education
-  const eduMatch = resumeText.match(/(?:EDUCATION|ACADEMIC)[:\s]*\n?([\s\S]*?)(?=\n(?:SKILLS|EXPERIENCE|PROJECTS|CERTIFICATIONS)|$)/i);
-  const eduText = eduMatch ? eduMatch[1] : '';
-  
-  const degreeMatch = eduText.match(/(?:B\.?S\.?|B\.?A\.?|M\.?S\.?|M\.?A\.?|Ph\.?D\.?|Bachelor|Master|Doctor)[^\n]*/i);
-  const degree = degreeMatch ? degreeMatch[0].trim() : 'Bachelor of Science in Computer Science';
-  
-  const universityMatch = eduText.match(/(?:University|College|Institute|School)[^\n,]*/i);
-  const university = universityMatch ? universityMatch[0].trim() : 'University';
-  
-  // Extract projects
-  const projMatch = resumeText.match(/(?:PROJECTS|PORTFOLIO|WORK)[:\s]*\n?([\s\S]*?)(?=\n(?:SKILLS|EDUCATION|EXPERIENCE|CERTIFICATIONS)|$)/i);
-  const projText = projMatch ? projMatch[1] : '';
-  
-  const projects: Array<{name: string, desc: string, tech: string[]}> = [];
-  const projLines = projText.split('\n').filter(l => l.trim());
-  
-  for (let i = 0; i < projLines.length && projects.length < 3; i++) {
-    const line = projLines[i];
-    if (line.match(/^[A-Z]/) && !line.startsWith('•')) {
-      const projName = line.split(/[—\-·(]/)[0].trim();
-      const desc = projLines[i + 1]?.replace(/^[\s•\-*]+/, '').trim() || 'A sophisticated solution built with modern technologies';
-      const techInDesc = skills.filter(s => line.toLowerCase().includes(s.toLowerCase()) || desc.toLowerCase().includes(s.toLowerCase())).slice(0, 3);
-      projects.push({
-        name: projName.substring(0, 40),
-        desc: desc.substring(0, 150),
-        tech: techInDesc.length > 0 ? techInDesc : skills.slice(0, 3)
-      });
-    }
-  }
-  
-  if (projects.length === 0) {
-    projects.push(
-      { name: 'Enterprise Platform', desc: 'Scalable cloud-native application serving thousands of users', tech: skills.slice(0, 3) },
-      { name: 'Analytics Dashboard', desc: 'Real-time data visualization and reporting system', tech: skills.slice(1, 4) },
-      { name: 'Mobile Application', desc: 'Cross-platform mobile app with seamless user experience', tech: skills.slice(2, 5) }
-    );
-  }
-  
-  // Extract tagline (look for a single sentence right under the name or in the bio)
-  let tagline = '';
-  const nameIndex = lines.indexOf(name);
-  if (nameIndex !== -1 && lines[nameIndex + 1]) {
-    const nextLine = lines[nameIndex + 1].trim();
-    if (nextLine.length > 10 && nextLine.length < 80 && !nextLine.includes('@') && !nextLine.includes('linkedin.com')) {
-      tagline = nextLine;
-    }
-  }
-  if (!tagline) {
-    tagline = `Passionate ${title} with ${years}+ years of experience crafting modern, high-performance solutions.`;
-  }
 
-  // Extract certifications
-  const certsMatch = resumeText.match(/(?:CERTIFICATIONS|LICENSES|CREDENTIALS|ACHIEVEMENTS)[:\s]*\n?([\s\S]*?)(?=\n(?:SKILLS|EXPERIENCE|PROJECTS|EDUCATION|ABOUT)|$)/i);
-  const certsText = certsMatch ? certsMatch[1] : '';
-  const certifications: Array<{name: string, issuer: string, date: string}> = [];
-  
-  if (certsText.trim()) {
-    const certLines = certsText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    for (const line of certLines) {
-      let cleanedLine = line.replace(/^[\s•\-*]+/, '').trim();
-      const yearMatch = cleanedLine.match(/\b(19|20)\d{2}\b/);
-      const date = yearMatch ? yearMatch[0] : '';
-      if (yearMatch) {
-        cleanedLine = cleanedLine.replace(new RegExp(`\\s*\\(?${yearMatch[0]}\\)?`), '').trim();
-      }
-      cleanedLine = cleanedLine.replace(/^[—–\-·,|:\s]+/, '').replace(/[—–\-·,|:\s]+$/, '').trim();
-      
-      const parts = cleanedLine.split(/\s*(?:—|–|-|,)\s*/);
-      let name = cleanedLine;
-      let issuer = 'Verified Credential';
-      if (parts.length >= 2) {
-        name = parts[0];
-        issuer = parts[1];
-      }
-      certifications.push({
-        name: name.trim(),
-        issuer: issuer.trim(),
-        date: date.trim() || 'Active'
-      });
-    }
-  }
+  // Map projects from Project state
+  const mappedProjects = projectsInput.map(p => ({
+    name: p.name,
+    desc: p.description,
+    tech: p.technologies.split(',').map(s => s.trim()).filter(Boolean)
+  }));
+  const projects = mappedProjects.length > 0 ? mappedProjects : [
+    { name: 'Enterprise Platform', desc: 'Scalable cloud-native application serving thousands of users', tech: skills.slice(0, 3) },
+    { name: 'Analytics Dashboard', desc: 'Real-time data visualization and reporting system', tech: skills.slice(1, 4) },
+    { name: 'Mobile Application', desc: 'Cross-platform mobile app with seamless user experience', tech: skills.slice(2, 5) }
+  ];
+
+  // Map education
+  const education = educationInput.length > 0 ? educationInput : [
+    { school: 'University', degree: 'Bachelor of Science in Computer Science', gradYear: '2020' }
+  ];
+
+  // Map certifications
+  const certifications = certificationsInput.length > 0 ? certificationsInput : [];
+
 
   const certsHtml = certifications.length > 0 ? `
     <!-- Certifications Section -->
@@ -1053,11 +937,13 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
                 <h2 class="section-title">Academic Background</h2>
             </div>
             <div class="education-grid">
+                ${education.map(edu => `
                 <div class="education-card animate">
                     <div class="education-icon">🎓</div>
-                    <h3 class="education-degree">${degree}</h3>
-                    <p class="education-school">${university}</p>
-                </div>
+                    <h3 class="education-degree">${edu.degree}</h3>
+                    <p class="education-school">${edu.school}</p>
+                    <p class="education-date" style="color: var(--color-accent); font-family: var(--font-mono); font-size: 14px; margin-top: 10px;">${edu.gradYear}</p>
+                </div>`).join('\n                ')}
             </div>
         </div>
     </section>
@@ -2015,8 +1901,10 @@ p {
 
 /* ─── Education ─── */
 .education-grid {
-    max-width: 600px;
-    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 32px;
 }
 
 .education-card {
@@ -2650,7 +2538,79 @@ document.addEventListener('DOMContentLoaded', () => {
 ───────────────────────────────────────────────────────────────────────────── */
 export default function PortfolioForge() {
   const [page, setPage] = useState("landing");
-  const [resumeText, setResumeText] = useState("");
+  const [personal, setPersonal] = useState<PersonalDetails>({
+    name: "Jane Smith",
+    title: "Senior Product Designer",
+    email: "jane@design.co",
+    location: "San Francisco, CA",
+    linkedin: "https://linkedin.com/in/janesmith",
+    github: "https://github.com/janesmith",
+    bio: "Award-winning Product Designer with 8+ years crafting user-centred digital experiences for fintech, health, and SaaS products. I bridge the gap between user research insights and pixel-perfect execution.",
+    tagline: "Crafting beautiful, user-centered digital products that drive growth and engagement."
+  });
+
+  const [experiences, setExperiences] = useState<Experience[]>([
+    {
+      company: "Stripe",
+      role: "Senior Product Designer",
+      period: "Jan 2021 – Present",
+      bullets: [
+        "Redesigned the Stripe Dashboard onboarding, reducing time-to-first-payment by 38%",
+        "Led a 3-person design team to ship 6 major product features in 2023",
+        "Established Stripe's first component library (Mosaic) used across 12 product teams"
+      ]
+    },
+    {
+      company: "Airbnb",
+      role: "Product Designer",
+      period: "May 2018 – Dec 2020",
+      bullets: [
+        "Designed Airbnb Experiences discovery flow (now used by 4M guests annually)",
+        "Ran 15+ usability studies; findings drove a 22% uplift in booking completion",
+        "Collaborated with engineering on a shared design system across iOS, Android, and web"
+      ]
+    }
+  ]);
+
+  const [projects, setProjects] = useState<Project[]>([
+    {
+      name: "MediFlow UX Case Study",
+      description: "Designed an end-to-end patient intake system for a telehealth startup. 0→1 product, shipped in 4 months.",
+      technologies: "Figma, UX Research, Prototyping"
+    },
+    {
+      name: "Mosaic Design System",
+      description: "A comprehensive components library and design tokens built for scale across desktop and mobile applications.",
+      technologies: "Figma, Storybook, HTML/CSS"
+    }
+  ]);
+
+  const [education, setEducation] = useState<Education[]>([
+    {
+      school: "Rhode Island School of Design (RISD)",
+      degree: "BFA in Graphic Design",
+      gradYear: "2018"
+    }
+  ]);
+
+  const [skills, setSkills] = useState<string>(
+    "Figma, Sketch, Wireframing, Design Systems, HTML/CSS, React, Interaction Design, User Research"
+  );
+
+  const [certifications, setCertifications] = useState<Certification[]>([
+    {
+      name: "Google UX Design Professional Certificate",
+      issuer: "Google",
+      date: "2019"
+    },
+    {
+      name: "Frontend Web Developer Nanodegree",
+      issuer: "Udacity",
+      date: "2020"
+    }
+  ]);
+
+  const [activeFormTab, setActiveFormTab] = useState<string>("personal");
   const [results, setResults] = useState<GenerationResult | null>(null);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("html");
@@ -2708,7 +2668,15 @@ export default function PortfolioForge() {
       setLoadingIdx(0);
       setTimeout(() => {
         try {
-          const fallbackResult = generateFallbackPortfolio(resumeText.trim(), selectedTemplate);
+          const fallbackResult = generateFallbackPortfolio(
+            personal,
+            experiences,
+            education,
+            projects,
+            skills,
+            certifications,
+            selectedTemplate
+          );
           setResults(fallbackResult);
           setActiveTab("html");
           setPage("results");
@@ -2729,7 +2697,19 @@ export default function PortfolioForge() {
     setPage("generating");
     setLoadingIdx(0);
     try {
-      const prompt = MASTER_PROMPT.replace("{RESUME}", resumeText.trim());
+      const structuredJSON = JSON.stringify({
+        personal,
+        experiences,
+        education,
+        projects: projects.map(p => ({
+          name: p.name,
+          desc: p.description,
+          tech: p.technologies.split(',').map(s => s.trim()).filter(Boolean)
+        })),
+        skills: skills.split(',').map(s => s.trim()).filter(Boolean),
+        certifications
+      }, null, 2);
+      const prompt = MASTER_PROMPT.replace("{RESUME}", structuredJSON);
       
       let res;
       if (aiProvider === "openai") {
@@ -2956,6 +2936,14 @@ export default function PortfolioForge() {
   /* ═══════════════════════════════════════════════════════════════════════════
      PAGE: INPUT
   ═══════════════════════════════════════════════════════════════════════════ */
+  const isFormValid = () => {
+    return (
+      personal.name.trim().length >= 2 &&
+      personal.title.trim().length >= 2 &&
+      personal.email.trim().length >= 3
+    );
+  };
+
   if (page === "input") return (
     <div style={{ minHeight: "100vh", background: "#07070F", display: "flex", flexDirection: "column" }} className="grid-bg">
       <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse 55% 40% at 50% 0%, rgba(201,168,76,.042) 0%, transparent 60%)", pointerEvents: "none" }} />
@@ -2963,7 +2951,7 @@ export default function PortfolioForge() {
 
       {/* Step indicator */}
       <div style={{ borderBottom: "1px solid rgba(255,255,255,.04)", padding: "12px 48px", display: "flex", alignItems: "center", gap: 10 }}>
-        {["Input Resume", "→", "AI Generates", "→", "Your Portfolio"].map((s, i) => (
+        {["Fill Out Details", "→", "AI Generates", "→", "Your Portfolio"].map((s, i) => (
           <span key={i} style={{ fontSize: 12, color: i === 0 ? "#C9A84C" : "#3A384A", fontWeight: i === 0 ? 600 : 400, letterSpacing: "0.04em" }}>{s}</span>
         ))}
       </div>
@@ -2971,65 +2959,559 @@ export default function PortfolioForge() {
       {/* Main grid */}
       <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 320px", maxWidth: 1100, margin: "0 auto", width: "100%", padding: "48px 24px", gap: 0 }}>
 
-        {/* Left: textarea */}
+        {/* Left: Wizard Form */}
         <div style={{ paddingRight: 44 }}>
           <div className="u1" style={{ marginBottom: 28 }}>
             <p style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: 10 }}>Step 01 of 01</p>
-            <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: 30, fontWeight: 700, letterSpacing: "-0.022em", color: "#F2EEE8", marginBottom: 8 }}>Paste Your Resume</h2>
-            <p style={{ fontSize: 14, color: "#6D6B7B", lineHeight: 1.75 }}>Copy your resume from a Word doc, Google Doc, or PDF. Include all sections — the AI uses everything. Plain text is perfect.</p>
+            <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: 30, fontWeight: 700, letterSpacing: "-0.022em", color: "#F2EEE8", marginBottom: 8 }}>Build Your Profile</h2>
+            <p style={{ fontSize: 14, color: "#6D6B7B", lineHeight: 1.75 }}>Enter your professional details below to forge a high-performance, pixel-perfect portfolio website.</p>
           </div>
 
           <div className="u3">
-            <textarea
-              className="resume-ta"
-              placeholder={`Jane Smith — Product Designer & UX Lead
-jane@design.co · linkedin.com/in/janesmith · behance.net/janesmith · San Francisco, CA
+            {/* Tab navigation */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: 12, overflowX: "auto" }}>
+              {[
+                { id: "personal", label: "Personal Info" },
+                { id: "experience", label: "Experience" },
+                { id: "projects", label: "Projects" },
+                { id: "education", label: "Education & Skills" },
+                { id: "certifications", label: "Certifications" }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveFormTab(tab.id)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: activeFormTab === tab.id ? "#C9A84C" : "#6D6B7B",
+                    fontSize: 14,
+                    fontWeight: activeFormTab === tab.id ? 700 : 500,
+                    padding: "10px 16px",
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "color 0.2s",
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  {tab.label}
+                  {activeFormTab === tab.id && (
+                    <div style={{ position: "absolute", bottom: -13, left: 0, right: 0, height: 2, background: "#C9A84C", borderRadius: 2 }} />
+                  )}
+                </button>
+              ))}
+            </div>
 
-ABOUT
-Award-winning Product Designer with 8+ years crafting user-centred digital experiences for fintech, health, and SaaS products. I bridge the gap between user research insights and pixel-perfect execution.
+            {/* Tab contents */}
+            <div style={{ minHeight: 380, marginBottom: 24 }}>
+              {activeFormTab === "personal" && (
+                <div>
+                  <div className="form-row">
+                    <div className="form-group-wrap">
+                      <span className="form-label-text">Full Name *</span>
+                      <input 
+                        type="text" 
+                        className="form-input-field" 
+                        placeholder="Jane Smith" 
+                        value={personal.name} 
+                        onChange={e => setPersonal({...personal, name: e.target.value})}
+                      />
+                    </div>
+                    <div className="form-group-wrap">
+                      <span className="form-label-text">Professional Title *</span>
+                      <input 
+                        type="text" 
+                        className="form-input-field" 
+                        placeholder="Senior Product Designer" 
+                        value={personal.title} 
+                        onChange={e => setPersonal({...personal, title: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group-wrap">
+                      <span className="form-label-text">Contact Email *</span>
+                      <input 
+                        type="email" 
+                        className="form-input-field" 
+                        placeholder="jane@design.co" 
+                        value={personal.email} 
+                        onChange={e => setPersonal({...personal, email: e.target.value})}
+                      />
+                    </div>
+                    <div className="form-group-wrap">
+                      <span className="form-label-text">Location</span>
+                      <input 
+                        type="text" 
+                        className="form-input-field" 
+                        placeholder="San Francisco, CA" 
+                        value={personal.location} 
+                        onChange={e => setPersonal({...personal, location: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group-wrap">
+                      <span className="form-label-text">LinkedIn URL</span>
+                      <input 
+                        type="text" 
+                        className="form-input-field" 
+                        placeholder="https://linkedin.com/in/janesmith" 
+                        value={personal.linkedin} 
+                        onChange={e => setPersonal({...personal, linkedin: e.target.value})}
+                      />
+                    </div>
+                    <div className="form-group-wrap">
+                      <span className="form-label-text">GitHub URL</span>
+                      <input 
+                        type="text" 
+                        className="form-input-field" 
+                        placeholder="https://github.com/janesmith" 
+                        value={personal.github} 
+                        onChange={e => setPersonal({...personal, github: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group-wrap">
+                    <span className="form-label-text">Short Tagline</span>
+                    <input 
+                      type="text" 
+                      className="form-input-field" 
+                      placeholder="Crafting beautiful, user-centered digital products that drive growth." 
+                      value={personal.tagline} 
+                      onChange={e => setPersonal({...personal, tagline: e.target.value})}
+                    />
+                  </div>
+                  <div className="form-group-wrap">
+                    <span className="form-label-text">Professional Bio / Summary</span>
+                    <textarea 
+                      className="form-input-field" 
+                      style={{ minHeight: 120, resize: "vertical" }}
+                      placeholder="A brief summary of your expertise, achievements, and design philosophy..."
+                      value={personal.bio} 
+                      onChange={e => setPersonal({...personal, bio: e.target.value})}
+                    />
+                  </div>
+                </div>
+              )}
 
-EXPERIENCE
+              {activeFormTab === "experience" && (
+                <div>
+                  <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#F2EEE8" }}>Job Positions</h3>
+                    <span style={{ fontSize: 12, color: "#6D6B7B" }}>{experiences.length} roles added</span>
+                  </div>
+                  {experiences.map((exp, idx) => (
+                    <div key={idx} className="wizard-card">
+                      <button 
+                        type="button" 
+                        className="remove-card-btn"
+                        onClick={() => {
+                          const updated = [...experiences];
+                          updated.splice(idx, 1);
+                          setExperiences(updated);
+                        }}
+                      >
+                        Remove
+                      </button>
+                      
+                      <div className="form-row" style={{ marginRight: 60 }}>
+                        <div className="form-group-wrap">
+                          <span className="form-label-text">Company Name</span>
+                          <input 
+                            type="text" 
+                            className="form-input-field" 
+                            placeholder="Stripe" 
+                            value={exp.company} 
+                            onChange={e => {
+                              const updated = [...experiences];
+                              updated[idx] = { ...updated[idx], company: e.target.value };
+                              setExperiences(updated);
+                            }}
+                          />
+                        </div>
+                        <div className="form-group-wrap">
+                          <span className="form-label-text">Job Role / Title</span>
+                          <input 
+                            type="text" 
+                            className="form-input-field" 
+                            placeholder="Senior Product Designer" 
+                            value={exp.role} 
+                            onChange={e => {
+                              const updated = [...experiences];
+                              updated[idx] = { ...updated[idx], role: e.target.value };
+                              setExperiences(updated);
+                            }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="form-group-wrap">
+                        <span className="form-label-text">Employment Period</span>
+                        <input 
+                          type="text" 
+                          className="form-input-field" 
+                          placeholder="Jan 2021 – Present" 
+                          value={exp.period} 
+                          onChange={e => {
+                            const updated = [...experiences];
+                            updated[idx] = { ...updated[idx], period: e.target.value };
+                            setExperiences(updated);
+                          }}
+                        />
+                      </div>
 
-Stripe — Senior Product Designer  (Jan 2021 – Present)
-• Redesigned the Stripe Dashboard onboarding, reducing time-to-first-payment by 38%
-• Led a 3-person design team to ship 6 major product features in 2023
-• Established Stripe's first component library (Mosaic) used across 12 product teams
+                      <div style={{ marginTop: 14 }}>
+                        <span className="form-label-text" style={{ display: "block", marginBottom: 6 }}>Key Achievements & Duties</span>
+                        {exp.bullets.map((bullet, bIdx) => (
+                          <div key={bIdx} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                            <input 
+                              type="text" 
+                              className="form-input-field" 
+                              style={{ marginTop: 0, flex: 1 }}
+                              placeholder="e.g. Redesigned Dashboard onboarding, increasing conversion by 24%" 
+                              value={bullet} 
+                              onChange={e => {
+                                const updated = [...experiences];
+                                const updatedBullets = [...updated[idx].bullets];
+                                updatedBullets[bIdx] = e.target.value;
+                                updated[idx] = { ...updated[idx], bullets: updatedBullets };
+                                setExperiences(updated);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...experiences];
+                                const updatedBullets = [...updated[idx].bullets];
+                                updatedBullets.splice(bIdx, 1);
+                                updated[idx] = { ...updated[idx], bullets: updatedBullets };
+                                setExperiences(updated);
+                              }}
+                              style={{
+                                background: "rgba(224,90,79,0.1)",
+                                border: "1px solid rgba(224,90,79,0.2)",
+                                color: "#E05A4F",
+                                borderRadius: "8px",
+                                width: 38,
+                                height: 38,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 16
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...experiences];
+                            const updatedBullets = [...updated[idx].bullets, ""];
+                            updated[idx] = { ...updated[idx], bullets: updatedBullets };
+                            setExperiences(updated);
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#C9A84C",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            marginTop: 4,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em"
+                          }}
+                        >
+                          + Add Achievement Bullet
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <button 
+                    type="button" 
+                    className="add-card-btn"
+                    onClick={() => setExperiences([...experiences, { company: "", role: "", period: "", bullets: [""] }])}
+                  >
+                    + Add Position
+                  </button>
+                </div>
+              )}
 
-Airbnb — Product Designer  (May 2018 – Dec 2020)
-• Designed Airbnb Experiences discovery flow (now used by 4M guests annually)
-• Ran 15+ usability studies; findings drove a 22% uplift in booking completion
-• Collaborated with engineering on a shared design system across iOS, Android, and web
+              {activeFormTab === "projects" && (
+                <div>
+                  <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#F2EEE8" }}>Featured Projects</h3>
+                    <span style={{ fontSize: 12, color: "#6D6B7B" }}>{projects.length} projects added</span>
+                  </div>
+                  {projects.map((proj, idx) => (
+                    <div key={idx} className="wizard-card">
+                      <button 
+                        type="button" 
+                        className="remove-card-btn"
+                        onClick={() => {
+                          const updated = [...projects];
+                          updated.splice(idx, 1);
+                          setProjects(updated);
+                        }}
+                      >
+                        Remove
+                      </button>
 
-SKILLS
-Design: Figma, Sketch, Prototyping, Wireframing, Design Systems, Motion Design
-Research: User Interviews, Usability Testing, A/B Testing, Heuristic Evaluation
-Technical: HTML/CSS basics, Lottie animations, Storybook
+                      <div className="form-row" style={{ marginRight: 60 }}>
+                        <div className="form-group-wrap">
+                          <span className="form-label-text">Project Name</span>
+                          <input 
+                            type="text" 
+                            className="form-input-field" 
+                            placeholder="MediFlow Telehealth" 
+                            value={proj.name} 
+                            onChange={e => {
+                              const updated = [...projects];
+                              updated[idx] = { ...updated[idx], name: e.target.value };
+                              setProjects(updated);
+                            }}
+                          />
+                        </div>
+                        <div className="form-group-wrap">
+                          <span className="form-label-text">Technologies Used</span>
+                          <input 
+                            type="text" 
+                            className="form-input-field" 
+                            placeholder="React, TypeScript, CSS Grid" 
+                            value={proj.technologies} 
+                            onChange={e => {
+                              const updated = [...projects];
+                              updated[idx] = { ...updated[idx], technologies: e.target.value };
+                              setProjects(updated);
+                            }}
+                          />
+                        </div>
+                      </div>
 
-PROJECTS
-MediFlow — UX Case Study (mediflow.design)
-Designed an end-to-end patient intake system for a telehealth startup. 0→1 product, shipped in 4 months.
+                      <div className="form-group-wrap">
+                        <span className="form-label-text">Project Description</span>
+                        <textarea 
+                          className="form-input-field" 
+                          style={{ minHeight: 80, resize: "vertical" }}
+                          placeholder="Describe what you built, the challenges you solved, and the final outcomes." 
+                          value={proj.description} 
+                          onChange={e => {
+                            const updated = [...projects];
+                            updated[idx] = { ...updated[idx], description: e.target.value };
+                            setProjects(updated);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
 
-EDUCATION
-RISD — Rhode Island School of Design, BFA Graphic Design (2018)
-Dean's List · Graduated with Distinction`}
-              value={resumeText}
-              onChange={e => { setResumeText(e.target.value); setError(""); }}
-            />
+                  <button 
+                    type="button" 
+                    className="add-card-btn"
+                    onClick={() => setProjects([...projects, { name: "", description: "", technologies: "" }])}
+                  >
+                    + Add Project
+                  </button>
+                </div>
+              )}
+
+              {activeFormTab === "education" && (
+                <div>
+                  {/* Skills */}
+                  <div style={{ marginBottom: 28 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#F2EEE8", marginBottom: 12 }}>Skills & Technologies</h3>
+                    <div className="form-group-wrap">
+                      <span className="form-label-text">Tech Stack / Skills (comma separated)</span>
+                      <textarea 
+                        className="form-input-field" 
+                        style={{ minHeight: 100, resize: "vertical" }}
+                        placeholder="Figma, Sketch, Wireframing, React, TypeScript, HTML/CSS, Git" 
+                        value={skills} 
+                        onChange={e => setSkills(e.target.value)}
+                      />
+                      <p style={{ fontSize: 11, color: "#6D6B7B", marginTop: 6, lineHeight: 1.5 }}>
+                        List your tools, languages, and methodologies separated by commas. These will be rendered as skill badges/progress indicators on your site.
+                      </p>
+                    </div>
+                  </div>
+
+                  <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", margin: "24px 0" }} />
+
+                  {/* Education */}
+                  <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#F2EEE8" }}>Education History</h3>
+                    <span style={{ fontSize: 12, color: "#6D6B7B" }}>{education.length} entries added</span>
+                  </div>
+                  {education.map((edu, idx) => (
+                    <div key={idx} className="wizard-card">
+                      <button 
+                        type="button" 
+                        className="remove-card-btn"
+                        onClick={() => {
+                          const updated = [...education];
+                          updated.splice(idx, 1);
+                          setEducation(updated);
+                        }}
+                      >
+                        Remove
+                      </button>
+
+                      <div className="form-group-wrap" style={{ marginRight: 60 }}>
+                        <span className="form-label-text">School / College Name</span>
+                        <input 
+                          type="text" 
+                          className="form-input-field" 
+                          placeholder="Rhode Island School of Design (RISD)" 
+                          value={edu.school} 
+                          onChange={e => {
+                            const updated = [...education];
+                            updated[idx] = { ...updated[idx], school: e.target.value };
+                            setEducation(updated);
+                          }}
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group-wrap">
+                          <span className="form-label-text">Degree / Program</span>
+                          <input 
+                            type="text" 
+                            className="form-input-field" 
+                            placeholder="BFA in Graphic Design" 
+                            value={edu.degree} 
+                            onChange={e => {
+                              const updated = [...education];
+                              updated[idx] = { ...updated[idx], degree: e.target.value };
+                              setEducation(updated);
+                            }}
+                          />
+                        </div>
+                        <div className="form-group-wrap">
+                          <span className="form-label-text">Graduation Year</span>
+                          <input 
+                            type="text" 
+                            className="form-input-field" 
+                            placeholder="2018" 
+                            value={edu.gradYear} 
+                            onChange={e => {
+                              const updated = [...education];
+                              updated[idx] = { ...updated[idx], gradYear: e.target.value };
+                              setEducation(updated);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button 
+                    type="button" 
+                    className="add-card-btn"
+                    onClick={() => setEducation([...education, { school: "", degree: "", gradYear: "" }])}
+                  >
+                    + Add Education
+                  </button>
+                </div>
+              )}
+
+              {activeFormTab === "certifications" && (
+                <div>
+                  <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#F2EEE8" }}>Licenses & Certifications</h3>
+                    <span style={{ fontSize: 12, color: "#6D6B7B" }}>{certifications.length} certifications added</span>
+                  </div>
+                  {certifications.map((cert, idx) => (
+                    <div key={idx} className="wizard-card">
+                      <button 
+                        type="button" 
+                        className="remove-card-btn"
+                        onClick={() => {
+                          const updated = [...certifications];
+                          updated.splice(idx, 1);
+                          setCertifications(updated);
+                        }}
+                      >
+                        Remove
+                      </button>
+
+                      <div className="form-group-wrap" style={{ marginRight: 60 }}>
+                        <span className="form-label-text">Certification Name</span>
+                        <input 
+                          type="text" 
+                          className="form-input-field" 
+                          placeholder="UX Design Professional Certificate" 
+                          value={cert.name} 
+                          onChange={e => {
+                            const updated = [...certifications];
+                            updated[idx] = { ...updated[idx], name: e.target.value };
+                            setCertifications(updated);
+                          }}
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group-wrap">
+                          <span className="form-label-text">Issuing Organization</span>
+                          <input 
+                            type="text" 
+                            className="form-input-field" 
+                            placeholder="Google / Coursera" 
+                            value={cert.issuer} 
+                            onChange={e => {
+                              const updated = [...certifications];
+                              updated[idx] = { ...updated[idx], issuer: e.target.value };
+                              setCertifications(updated);
+                            }}
+                          />
+                        </div>
+                        <div className="form-group-wrap">
+                          <span className="form-label-text">Date Issued / Year</span>
+                          <input 
+                            type="text" 
+                            className="form-input-field" 
+                            placeholder="2019" 
+                            value={cert.date} 
+                            onChange={e => {
+                              const updated = [...certifications];
+                              updated[idx] = { ...updated[idx], date: e.target.value };
+                              setCertifications(updated);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button 
+                    type="button" 
+                    className="add-card-btn"
+                    onClick={() => setCertifications([...certifications, { name: "", issuer: "", date: "" }])}
+                  >
+                    + Add Certification
+                  </button>
+                </div>
+              )}
+            </div>
 
             {error && (
-              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10, background: "rgba(224,90,79,.06)", border: "1px solid rgba(224,90,79,.2)", borderRadius: 8, padding: "10px 14px" }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10, marginBottom: 16, background: "rgba(224,90,79,.06)", border: "1px solid rgba(224,90,79,.2)", borderRadius: 8, padding: "10px 14px" }}>
                 <span style={{ fontSize: 13, color: "#E05A4F" }}>{error}</span>
               </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
-              <span style={{ fontSize: 12, color: resumeText.length < 120 ? "#E05A4F" : "#2FC87A", fontFamily: "'JetBrains Mono',monospace" }}>
-                {resumeText.length} chars {resumeText.length < 120 ? `· need ${120 - resumeText.length} more` : "· ready ✓"}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
+              <span style={{ fontSize: 12, color: isFormValid() ? "#2FC87A" : "#E05A4F", fontFamily: "'JetBrains Mono',monospace" }}>
+                {isFormValid() ? "Form ready ✓" : "Please fill Name, Title, and Email"}
               </span>
               <button
                 className="btn-prime"
                 onClick={() => setPage("method")}
-                disabled={resumeText.trim().length < 120}
+                disabled={!isFormValid()}
                 style={{ padding: "14px 40px", fontSize: 14 }}
               >
                 Next Step →
@@ -3043,12 +3525,11 @@ Dean's List · Graduated with Distinction`}
           <p style={{ fontSize: 11, color: "#55536A", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 22 }}>Tips for Best Results</p>
 
           {[
-            ["Contact info", "Email, LinkedIn, GitHub, city — used in the contact section and Open Graph meta tags."],
-            ["Job entries", "Company name, title, dates (month + year), and 2–4 achievement bullets per role."],
-            ["Projects", "Name, short description, tech stack, GitHub or live URL if you have one."],
-            ["Specific skills", "Name exact tools (React, Figma, PostgreSQL) rather than vague categories."],
-            ["Professional bio", "A 2–3 sentence summary generates a compelling About section and hero tagline."],
-            ["Education", "Institution, degree, field, graduation year, GPA or honours if strong."],
+            ["Personal Info", "Add active, professional links and a summary bio. They are encoded into SEO and header buttons."],
+            ["Chronological Journey", "List positions with date ranges and specific metric-driven bullet accomplishments."],
+            ["Key Projects", "Provide exact tech tags (comma-separated) to display filter badges automatically."],
+            ["Education History", "Specify schools, degrees, and grad years to build your credentials section."],
+            ["Licenses & Certs", "Add issuer names and dates to show ongoing professional development."],
           ].map(([t, d]) => (
             <div key={t} style={{ marginBottom: 18, paddingBottom: 18, borderBottom: "1px solid rgba(255,255,255,.04)" }}>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
@@ -3250,7 +3731,7 @@ Dean's List · Graduated with Distinction`}
 
     return (
       <div style={{ minHeight: "100vh", background: "#07070F" }}>
-        <NavBar onBack={() => { setResults(null); setResumeText(""); setPage("input"); }} />
+        <NavBar onBack={() => { setResults(null); setPage("input"); }} />
 
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "44px 24px 100px" }}>
 
@@ -3261,7 +3742,7 @@ Dean's List · Graduated with Distinction`}
               <div style={{ fontWeight: 700, color: "#2FC87A", fontSize: 14, marginBottom: 3 }}>Portfolio generated successfully</div>
               <div style={{ fontSize: 13, color: "#6D6B7B" }}>3 files ready below. Copy or download each file, save into one folder, then follow the deployment guide.</div>
             </div>
-            <button className="btn-ghost" onClick={() => { setResults(null); setResumeText(""); setPage("input"); }} style={{ marginLeft: "auto", padding: "8px 16px", fontSize: 12, flexShrink: 0 }}>
+            <button className="btn-ghost" onClick={() => { setResults(null); setPage("input"); }} style={{ marginLeft: "auto", padding: "8px 16px", fontSize: 12, flexShrink: 0 }}>
               Start Over
             </button>
           </div>
@@ -3584,7 +4065,7 @@ Dean's List · Graduated with Distinction`}
           {/* ── Footer CTA ── */}
           <div style={{ marginTop: 80, borderTop: "1px solid rgba(255,255,255,.05)", paddingTop: 52, textAlign: "center" }}>
             <p style={{ fontSize: 14, color: "#6D6B7B", marginBottom: 22 }}>Update your resume or want a different design?</p>
-            <button className="btn-prime" onClick={() => { setResults(null); setResumeText(""); setPage("input"); }} style={{ padding: "16px 44px", fontSize: 14 }}>
+            <button className="btn-prime" onClick={() => { setResults(null); setPage("input"); }} style={{ padding: "16px 44px", fontSize: 14 }}>
               Generate Another Portfolio
             </button>
             <p style={{ fontSize: 11, color: "#3A384A", marginTop: 52, letterSpacing: "0.06em" }}>
