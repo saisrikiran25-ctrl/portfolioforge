@@ -511,6 +511,9 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
     }
   }
 
+  // Strip "Name:" prefix if present
+  name = name.replace(/^name[:\s]+/i, '').trim();
+
   const firstName = name.split(' ')[0] || 'Professional';
   const lastName = name.split(' ').slice(1).join(' ') || '';
   const initials = (firstName[0] || 'P') + (lastName[0] || 'F');
@@ -538,6 +541,9 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
     const match = resumeText.match(pattern);
     if (match) { title = match[1].trim(); break; }
   }
+  
+  // Strip "Title:" or "Role:" prefix if present
+  title = title.replace(/^(title|role)[:\s]+/i, '').trim();
   
   // Extract location (used in meta tags if needed)
   const locationMatch = resumeText.match(/(?:^|\s)([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*,\s*[A-Z]{2})/m) ||
