@@ -34,7 +34,9 @@ jobs:
               });
               core.info("Pages source is set to GitHub Actions (build_type=workflow).");
             } catch (error) {
-              core.warning(`Could not update Pages build_type: ${error.message}`);
+              core.warning(
+                `Could not update Pages build_type to workflow (check repo Pages permissions/settings): ${error.message}`,
+              );
             }
 
       - name: Setup Node.js
@@ -65,6 +67,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for legacy Pages deployment race window
+        # During migration from branch-based Pages, GitHub may still trigger an auto Jekyll deployment.
+        # Waiting here helps ensure this workflow's deploy finishes last and remains the active site.
         run: sleep 45
 
       - name: Deploy to GitHub Pages
