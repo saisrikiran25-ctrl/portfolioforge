@@ -490,10 +490,27 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
   // Parse resume data
   const lines = resumeText.split('\n').filter(l => l.trim());
   
-  // Extract name (first non-empty line or first line with capital letters)
-  const nameLine = lines[0] || "Professional Portfolio";
-  const nameMatch = nameLine.match(/^([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)/);
-  const name = nameMatch ? nameMatch[1] : nameLine.split(/[—\-·,]/)[0].trim();
+  // Extract name (loop through first 5 lines to find a valid capitalized name candidate)
+  let name = "Professional Portfolio";
+  const forbiddenNames = /^(resume|curriculum|vitae|cv|contact|info|summary|about|portfolio|experience|skills|education|certifications|projects)$/i;
+  
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const candidate = lines[i].trim();
+    if (!candidate) continue;
+    
+    // Check if candidate line consists of 1-4 words, starts with capital letters, and does not contain forbidden keywords
+    const cleanCandidate = candidate.split(/[—\-·,]/)[0].trim();
+    const words = cleanCandidate.split(/\s+/);
+    if (words.length >= 1 && words.length <= 4) {
+      const isCapitalized = words.every(w => /^[A-Z]/.test(w));
+      const isForbidden = forbiddenNames.test(cleanCandidate);
+      if (isCapitalized && !isForbidden) {
+        name = cleanCandidate;
+        break;
+      }
+    }
+  }
+
   const firstName = name.split(' ')[0] || 'Professional';
   const lastName = name.split(' ').slice(1).join(' ') || '';
   const initials = (firstName[0] || 'P') + (lastName[0] || 'F');
@@ -526,41 +543,134 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
   const locationMatch = resumeText.match(/(?:^|\s)([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*,\s*[A-Z]{2})/m) ||
                         resumeText.match(/([A-Z][a-zA-Z]+,\s*[A-Z][a-zA-Z]+)/);
   const _location = locationMatch ? locationMatch[1] : 'United States';
-  void _location; // Available for future use
+  void _location;
   
+  // Calculate years of experience
+  const yearMatches = resumeText.match(/\b(19|20)\d{2}\b/g);
+  const years = yearMatches ? Math.max(1, new Date().getFullYear() - Math.min(...yearMatches.map(Number))) : 5;
+
   // Extract about/summary
   const aboutMatch = resumeText.match(/(?:ABOUT|SUMMARY|PROFILE|OBJECTIVE)[:\s]*\n?([\s\S]*?)(?=\n[A-Z]{2,}|\n\n[A-Z]|$)/i);
   const about = aboutMatch ? aboutMatch[1].trim().substring(0, 500) : 
     `Passionate ${title} with extensive experience in building scalable solutions and delivering exceptional results. Committed to continuous learning and innovation.`;
-  
-  // Extract experience
-  const expMatch = resumeText.match(/(?:EXPERIENCE|WORK HISTORY|EMPLOYMENT)[:\s]*\n?([\s\S]*?)(?=\n(?:SKILLS|EDUCATION|PROJECTS|CERTIFICATIONS)|$)/i);
+
+  // Extract experience section text
+  const expMatch = resumeText.match(/(?:EXPERIENCE|WORK HISTORY|EMPLOYMENT|WORK EXPERIENCE)[:\s]*\n?([\s\S]*?)(?=\n(?:SKILLS|EDUCATION|PROJECTS|CERTIFICATIONS|ACHIEVEMENTS|LICENSES|HONORS|PUBLICATIONS)|$)/i);
   const expText = expMatch ? expMatch[1] : '';
+  const expLines = expText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   
-  // Parse experience entries
   const experiences: Array<{company: string, role: string, period: string, bullets: string[]}> = [];
-  const expBlocks = expText.split(/\n(?=[A-Z][a-zA-Z\s&.,]+(?:—|–|-|·))/);
+  const dateRangeRegex = /(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|\b\d{4}|\b\d{2}\/\d{4})\s*(?:-|–|—|to)\s*(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|\b\d{4}|\b\d{2}\/\d{4}|Present|Current|Active)/i;
   
-  for (const block of expBlocks) {
-    if (!block.trim()) continue;
-    const firstLine = block.split('\n')[0];
-    const companyMatch = firstLine.match(/^([A-Z][a-zA-Z\s&.,]+?)(?:\s*(?:—|–|-|·)\s*(.+?))?(?:\s*\(([^)]+)\))?$/);
-    if (companyMatch) {
-      const bullets = block.split('\n').slice(1)
-        .filter(l => l.trim().startsWith('•') || l.trim().startsWith('-') || l.trim().startsWith('*'))
-        .map(l => l.replace(/^[\s•\-*]+/, '').trim())
-        .filter(l => l.length > 10)
-        .slice(0, 4);
+  let currentEntry: typeof experiences[0] | null = null;
+  
+  for (let i = 0; i < expLines.length; i++) {
+    const line = expLines[i];
+    const hasDate = dateRangeRegex.test(line);
+    const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line);
+    
+    if (hasDate) {
+      if (currentEntry) {
+        experiences.push(currentEntry);
+      }
       
-      if (bullets.length > 0 || companyMatch[1]) {
-        experiences.push({
-          company: companyMatch[1]?.trim() || 'Company',
-          role: companyMatch[2]?.trim() || title,
-          period: companyMatch[3]?.trim() || '2020 - Present',
-          bullets: bullets.length > 0 ? bullets : ['Delivered key projects and initiatives', 'Collaborated with cross-functional teams', 'Drove continuous improvement']
-        });
+      const dateMatch = line.match(dateRangeRegex);
+      const period = dateMatch ? dateMatch[0] : '2021 - Present';
+      
+      let headerText = line.replace(dateRangeRegex, '').replace(/[()]/g, '').trim();
+      if (headerText.length < 4 && i > 0) {
+        const prevLine = expLines[i - 1];
+        if (!dateRangeRegex.test(prevLine) && !prevLine.startsWith('•') && !prevLine.startsWith('-') && !prevLine.startsWith('*')) {
+          headerText = prevLine + ' ' + headerText;
+        }
+      }
+      
+      headerText = headerText.replace(/^[—–\-·,|:\s]+/, '').replace(/[—–\-·,|:\s]+$/, '').trim();
+      
+      let company = 'Company';
+      let role = title;
+      
+      const parts = headerText.split(/\s*(?:—|–|-|\||·|,|at\s+)\s*/);
+      if (parts.length >= 2) {
+        const roleKeywords = /(?:Engineer|Developer|Designer|Manager|Lead|Architect|Analyst|Consultant|Director|Specialist|Writer|Expert|Scientist|VP|Head|Intern)/i;
+        if (roleKeywords.test(parts[1])) {
+          company = parts[0];
+          role = parts[1];
+        } else if (roleKeywords.test(parts[0])) {
+          role = parts[0];
+          company = parts[1];
+        } else {
+          company = parts[0];
+          role = parts[1];
+        }
+      } else if (parts.length === 1 && parts[0].length > 0) {
+        const atMatch = parts[0].match(/(.+?)\s+at\s+(.+)/i);
+        if (atMatch) {
+          role = atMatch[1].trim();
+          company = atMatch[2].trim();
+        } else {
+          if (/(?:Engineer|Developer|Designer|Manager|Lead|Architect|Analyst|Consultant)/i.test(parts[0])) {
+            role = parts[0];
+            company = 'Company';
+          } else {
+            company = parts[0];
+            role = title;
+          }
+        }
+      }
+      
+      currentEntry = {
+        company: company.trim() || 'Company',
+        role: role.trim() || title,
+        period: period.trim(),
+        bullets: []
+      };
+    } else {
+      if (currentEntry) {
+        if (isBullet || line.length > 10) {
+          const cleanedBullet = line.replace(/^[\s•\-*]+/, '').replace(/^\d+\.\s*/, '').trim();
+          if (cleanedBullet.length > 5) {
+            currentEntry.bullets.push(cleanedBullet);
+          }
+        }
+      } else {
+        const nextLineHasDate = (i + 1 < expLines.length) && dateRangeRegex.test(expLines[i + 1]);
+        if (nextLineHasDate && !isBullet) {
+          // Lookahead header handled by next iteration's prevLine check
+        }
       }
     }
+  }
+  
+  if (currentEntry) {
+    experiences.push(currentEntry);
+  }
+
+  // Fallback to simpler line parser if no date ranges were found
+  if (experiences.length === 0) {
+    let currentExp: typeof experiences[0] | null = null;
+    for (const line of expLines) {
+      const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line);
+      if (!isBullet && /^[A-Z]/.test(line)) {
+        if (currentExp) experiences.push(currentExp);
+        let rest = line.replace(/[()]/g, '').trim();
+        let company = 'Company';
+        let role = title;
+        let period = '2020 - Present';
+        
+        const parts = rest.split(/\s*(?:—|–|-|\||·|,|at\s+)\s*/);
+        if (parts.length >= 2) {
+          company = parts[0];
+          role = parts[1];
+        } else {
+          company = parts[0];
+        }
+        currentExp = { company, role, period, bullets: [] };
+      } else if (currentExp && (isBullet || line.length > 8)) {
+        currentExp.bullets.push(line.replace(/^[\s•\-*]+/, '').trim());
+      }
+    }
+    if (currentExp) experiences.push(currentExp);
   }
   
   if (experiences.length === 0) {
@@ -630,9 +740,72 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
     );
   }
   
-  // Calculate years of experience
-  const yearMatches = resumeText.match(/\b(19|20)\d{2}\b/g);
-  const years = yearMatches ? Math.max(1, new Date().getFullYear() - Math.min(...yearMatches.map(Number))) : 5;
+  // Extract tagline (look for a single sentence right under the name or in the bio)
+  let tagline = '';
+  const nameIndex = lines.indexOf(name);
+  if (nameIndex !== -1 && lines[nameIndex + 1]) {
+    const nextLine = lines[nameIndex + 1].trim();
+    if (nextLine.length > 10 && nextLine.length < 80 && !nextLine.includes('@') && !nextLine.includes('linkedin.com')) {
+      tagline = nextLine;
+    }
+  }
+  if (!tagline) {
+    tagline = `Passionate ${title} with ${years}+ years of experience crafting modern, high-performance solutions.`;
+  }
+
+  // Extract certifications
+  const certsMatch = resumeText.match(/(?:CERTIFICATIONS|LICENSES|CREDENTIALS|ACHIEVEMENTS)[:\s]*\n?([\s\S]*?)(?=\n(?:SKILLS|EXPERIENCE|PROJECTS|EDUCATION|ABOUT)|$)/i);
+  const certsText = certsMatch ? certsMatch[1] : '';
+  const certifications: Array<{name: string, issuer: string, date: string}> = [];
+  
+  if (certsText.trim()) {
+    const certLines = certsText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    for (const line of certLines) {
+      let cleanedLine = line.replace(/^[\s•\-*]+/, '').trim();
+      const yearMatch = cleanedLine.match(/\b(19|20)\d{2}\b/);
+      const date = yearMatch ? yearMatch[0] : '';
+      if (yearMatch) {
+        cleanedLine = cleanedLine.replace(new RegExp(`\\s*\\(?${yearMatch[0]}\\)?`), '').trim();
+      }
+      cleanedLine = cleanedLine.replace(/^[—–\-·,|:\s]+/, '').replace(/[—–\-·,|:\s]+$/, '').trim();
+      
+      const parts = cleanedLine.split(/\s*(?:—|–|-|,)\s*/);
+      let name = cleanedLine;
+      let issuer = 'Verified Credential';
+      if (parts.length >= 2) {
+        name = parts[0];
+        issuer = parts[1];
+      }
+      certifications.push({
+        name: name.trim(),
+        issuer: issuer.trim(),
+        date: date.trim() || 'Active'
+      });
+    }
+  }
+
+  const certsHtml = certifications.length > 0 ? `
+    <!-- Certifications Section -->
+    <section id="certifications" class="section">
+        <div class="container">
+            <div class="section-header animate">
+                <span class="section-label">${templateId === 'tech' ? './credentials' : 'Certifications'}</span>
+                <h2 class="section-title">${templateId === 'tech' ? 'cat certs_and_licenses.txt' : 'Licenses & Certifications'}</h2>
+            </div>
+            <div class="certs-grid">
+                ${certifications.map(cert => `
+                <div class="cert-card animate">
+                    <div class="cert-icon">🏆</div>
+                    <div class="cert-info">
+                        <h3 class="cert-name">${cert.name}</h3>
+                        <p class="cert-issuer">${cert.issuer}</p>
+                        <span class="cert-date">${cert.date}</span>
+                    </div>
+                </div>`).join('\n                ')}
+            </div>
+        </div>
+    </section>
+  ` : '';
 
   // Generate HTML
   const html = `<!DOCTYPE html>
@@ -705,6 +878,7 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
                 <li><a href="#experience" class="nav-link">Experience</a></li>
                 <li><a href="#skills" class="nav-link">Skills</a></li>
                 <li><a href="#projects" class="nav-link">Projects</a></li>
+                ${certifications.length > 0 ? `<li><a href="#certifications" class="nav-link">Certifications</a></li>` : ''}
                 <li><a href="#contact" class="nav-link nav-cta">Contact</a></li>
             </ul>
         </div>
@@ -725,7 +899,7 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
             <div class="hero-title reveal reveal-3">
                 <span id="typed-text"></span><span class="cursor">|</span>
             </div>
-            <p class="hero-tagline reveal reveal-4">${about.substring(0, 150)}${about.length > 150 ? '...' : ''}</p>
+            <p class="hero-tagline reveal reveal-4">${tagline}</p>
             <div class="hero-cta reveal reveal-5">
                 <a href="#projects" class="btn btn-primary">View My Work</a>
                 <a href="#contact" class="btn btn-secondary">Get In Touch</a>
@@ -862,6 +1036,8 @@ function generateFallbackPortfolio(resumeText: string, templateId: string = "exe
             </div>
         </div>
     </section>
+
+    ${certsHtml}
 
     <!-- Education Section -->
     <section id="education" class="section">
@@ -2140,7 +2316,71 @@ p {
         max-width: 280px;
         justify-content: center;
     }
-}`;
+}
+
+/* ─── Certifications ─── */
+.certs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 32px;
+}
+
+.cert-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    transition: var(--transition);
+}
+
+.cert-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+}
+
+.cert-icon {
+    font-size: 28px;
+    background: var(--color-accent-glow);
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cert-info {
+    flex: 1;
+}
+
+.cert-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.cert-issuer {
+    font-size: 14px;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+}
+
+.cert-date {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+`;
 
   // Generate JavaScript
   const js = `'use strict';
